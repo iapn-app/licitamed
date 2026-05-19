@@ -95,7 +95,7 @@ export default function CotacaoPortalPage({ params }: { params: { token: string 
           </div>
           <h1 className="text-xl font-semibold text-neutral-900">Cotação enviada!</h1>
           <p className="text-sm text-neutral-500 mt-2 leading-relaxed">
-            Obrigado, <strong>{fornecedor.nome}</strong>. Sua cotação foi recebida com sucesso e será analisada pela equipe da DistribMed Hospitalar.
+            Obrigado, <strong>{fornecedor.nome}</strong>. Sua cotação foi recebida com sucesso e será analisada pela equipe da POWER MED.
           </p>
           <div className="mt-6 p-4 bg-white border border-neutral-200 rounded-lg text-left">
             <p className="text-xs text-neutral-500 font-medium uppercase tracking-wide mb-2">Resumo</p>
@@ -126,7 +126,7 @@ export default function CotacaoPortalPage({ params }: { params: { token: string 
             </div>
             <span className="text-sm font-semibold text-neutral-900">LicitaMed</span>
             <span className="text-neutral-200 text-sm">·</span>
-            <span className="text-sm text-neutral-500">DistribMed Hospitalar</span>
+            <span className="text-sm text-neutral-500">POWER MED</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-neutral-500">
             <Package className="w-3.5 h-3.5" />
@@ -347,7 +347,7 @@ export default function CotacaoPortalPage({ params }: { params: { token: string 
         )}
 
         <p className="text-center text-xs text-neutral-300 pb-6">
-          LicitaMed · DistribMed Hospitalar · {new Date().getFullYear()}
+          LicitaMed · POWER MED · {new Date().getFullYear()}
         </p>
       </main>
     </div>

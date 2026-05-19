@@ -57,8 +57,8 @@ export function Sidebar() {
           <Activity className="w-4 h-4 text-white" strokeWidth={2.5} />
         </div>
         <div>
-          <span className="text-sm font-semibold text-neutral-900 tracking-tight">LicitaMed</span>
-          <span className="block text-[10px] text-neutral-400 leading-none mt-0.5">Gestão de Cotações</span>
+          <span className="text-sm font-semibold text-neutral-900 tracking-tight">POWER MED</span>
+          <span className="block text-[10px] text-neutral-400 leading-none mt-0.5">Gestão de Licitações</span>
         </div>
       </div>
 
@@ -125,7 +125,7 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="px-5 py-4 border-t border-neutral-100">
-        <p className="text-xs font-medium text-neutral-700 truncate">DistribMed Hospitalar</p>
+        <p className="text-xs font-medium text-neutral-700 truncate">POWER MED</p>
         <p className="text-[10px] text-neutral-400 mt-0.5">v1.0.0 — Beta</p>
       </div>
     </aside>

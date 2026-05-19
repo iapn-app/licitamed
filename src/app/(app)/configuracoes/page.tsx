@@ -8,11 +8,11 @@ import { toast } from "sonner";
 
 export default function ConfiguracoesPage() {
   const [empresa, setEmpresa] = useState({
-    nome: "DistribMed Hospitalar Ltda",
-    cnpj: "12.345.678/0001-99",
-    email: "licitacoes@distribmed.com.br",
-    telefone: "(11) 3456-7890",
-    endereco: "Rua das Flores, 1234 — São Paulo, SP",
+    nome: "POWER MED MATERIAL HOSPITALAR LTDA",
+    cnpj: "42.241.234/0001-70",
+    email: "powermedadm@gmail.com",
+    telefone: "(21) 3795-9747",
+    endereco: "Est do Pau Ferro, 480 - Bloco 001 Salas 0401/0402, Pechincha, Rio de Janeiro — RJ, CEP: 22.743-051",
   });
 
   const [margemPadrao, setMargemPadrao] = useState("20");
