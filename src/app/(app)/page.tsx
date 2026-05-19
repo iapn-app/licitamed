@@ -138,7 +138,7 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        <div className="bg-white rounded-lg border border-neutral-200 shadow-card overflow-hidden">
+        <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-100">
@@ -223,7 +223,7 @@ export default function DashboardPage() {
 
       {/* Quick actions */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border border-neutral-200 p-5 shadow-card">
+        <div className="neon-card bg-white rounded-lg border border-neutral-200 p-5 shadow-card">
           <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-3">
             Ações rápidas
           </h3>
@@ -257,7 +257,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="col-span-2 bg-white rounded-lg border border-neutral-200 p-5 shadow-card">
+        <div className="neon-card col-span-2 bg-white rounded-lg border border-neutral-200 p-5 shadow-card">
           <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-3">
             Próximos prazos
           </h3>

@@ -53,15 +53,15 @@ body {
   }
 }
 
-/* Neon right-border effect — applied consistently across all KPI/supplier/licitação cards */
+/* Neon bottom-border effect — applied to all dashboard cards */
 .neon-card {
-  border-right: 3px solid #1A56DB;
-  box-shadow: 4px 0 15px rgba(26, 86, 219, 0.4), 2px 0 6px rgba(26, 86, 219, 0.2);
+  border-bottom: 2px solid #1A56DB;
+  box-shadow: 0 4px 15px rgba(26, 86, 219, 0.35), 0 2px 6px rgba(26, 86, 219, 0.2);
   transition: box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
 .neon-card:hover {
-  box-shadow: 6px 0 20px rgba(26, 86, 219, 0.6), 3px 0 10px rgba(26, 86, 219, 0.3);
+  box-shadow: 0 6px 20px rgba(26, 86, 219, 0.5), 0 3px 10px rgba(26, 86, 219, 0.3);
 }
 
 @layer components {

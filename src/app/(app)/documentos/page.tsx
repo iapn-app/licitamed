@@ -47,7 +47,7 @@ export default function DocumentosPage() {
       )}
 
       {Object.entries(grouped).map(([tipo, items]) => (
-        <div key={tipo} className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card overflow-hidden">
+        <div key={tipo} className="bg-white rounded-lg border border-neutral-200 shadow-card overflow-hidden">
           <div className="px-5 py-3 border-b border-neutral-100">
             <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">{tipo}</h3>
           </div>
