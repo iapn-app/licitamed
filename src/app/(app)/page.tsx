@@ -9,84 +9,105 @@ import {
   ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
-import {
-  licitacoes,
-  DASHBOARD_METRICS,
-  getLicitacaoProgress,
-  getStatusLabel,
-  getStatusColor,
-} from "@/lib/mock-data";
+import { getStatusLabel, getStatusColor } from "@/lib/mock-data";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle, CardValue, CardDescription } from "@/components/ui/card";
 import { NeonCard } from "@/components/shared/neon-card";
+import { supabase } from "@/lib/supabase";
+import type { LicitacaoRow } from "@/lib/database.types";
+import type { LicitacaoStatus } from "@/lib/mock-data";
 
-const metricCards = [
-  {
-    title: "Licitações ativas",
-    href: "/licitacoes",
-    value: String(DASHBOARD_METRICS.licitacoesAtivas),
-    description: "Em cotação, disputa ou proposta",
-    icon: TrendingUp,
-    color: "text-[#1A56DB]",
-    bg: "bg-[#EBF0FD]",
-    trend: "+1 este mês",
-    trendUp: true,
-  },
-  {
-    title: "Valor total em aberto",
-    href: "/licitacoes",
-    value: formatCurrency(DASHBOARD_METRICS.valorTotalAberto),
-    description: "Valor estimado das licitações ativas",
-    icon: DollarSign,
-    color: "text-[#0E9F6E]",
-    bg: "bg-[#E8F7F2]",
-    trend: "R$ 23,3M no mês anterior",
-    trendUp: false,
-  },
-  {
-    title: "Fornecedores aguardando",
-    href: "/cotacoes",
-    value: String(DASHBOARD_METRICS.fornecedoresAguardando),
-    description: "Cotações enviadas sem resposta",
-    icon: Clock,
-    color: "text-[#D97706]",
-    bg: "bg-[#FEF9EB]",
-    trend: "2 com prazo hoje",
-    trendUp: false,
-  },
-  {
-    title: "Itens sem cotação",
-    href: "/licitacoes",
-    value: String(DASHBOARD_METRICS.itensSemCotacao),
-    description: "Precisam de fornecedor",
-    icon: AlertCircle,
-    color: "text-[#E02424]",
-    bg: "bg-[#FEF0F0]",
-    trend: "Ação necessária",
-    trendUp: false,
-  },
-  {
-    title: "Propostas para envio",
-    href: "/licitacoes",
-    value: String(DASHBOARD_METRICS.propostasParaEnvio),
-    description: "Prontas para submissão",
-    icon: CheckCircle2,
-    color: "text-[#0E9F6E]",
-    bg: "bg-[#E8F7F2]",
-    trend: "Prazo: 30/05",
-    trendUp: true,
-  },
-];
+export const dynamic = "force-dynamic";
 
-export default function DashboardPage() {
+const ACTIVE_STATUSES = ["em_cotacao", "proposta_pronta", "em_disputa"];
+
+export default async function DashboardPage() {
+  const [
+    { data: licitacoesData },
+    { count: fornecedoresAguardando },
+    { count: itensSemCotacao },
+  ] = await Promise.all([
+    supabase.from("licitacoes").select("*").order("created_at", { ascending: false }),
+    supabase.from("cotacoes").select("*", { count: "exact", head: true }).eq("status", "enviada"),
+    supabase.from("itens_licitacao").select("*", { count: "exact", head: true }).eq("status", "sem_cotacao"),
+  ]);
+
+  const licitacoes: LicitacaoRow[] = licitacoesData ?? [];
+
+  const licitacoesAtivas = licitacoes.filter((l) => ACTIVE_STATUSES.includes(l.status));
+  const valorTotalAberto = licitacoesAtivas.reduce((sum, l) => sum + (l.valor_estimado ?? 0), 0);
+  const propostasParaEnvio = licitacoes.filter((l) => l.status === "proposta_pronta").length;
+
+  const metricCards = [
+    {
+      title: "Licitações ativas",
+      href: "/licitacoes",
+      value: String(licitacoesAtivas.length),
+      description: "Em cotação, disputa ou proposta",
+      icon: TrendingUp,
+      color: "text-[#1A56DB]",
+      bg: "bg-[#EBF0FD]",
+      trend: `${licitacoes.length} total`,
+      trendUp: true,
+    },
+    {
+      title: "Valor total em aberto",
+      href: "/licitacoes",
+      value: formatCurrency(valorTotalAberto),
+      description: "Valor estimado das licitações ativas",
+      icon: DollarSign,
+      color: "text-[#0E9F6E]",
+      bg: "bg-[#E8F7F2]",
+      trend: "Licitações ativas",
+      trendUp: true,
+    },
+    {
+      title: "Fornecedores aguardando",
+      href: "/cotacoes",
+      value: String(fornecedoresAguardando ?? 0),
+      description: "Cotações enviadas sem resposta",
+      icon: Clock,
+      color: "text-[#D97706]",
+      bg: "bg-[#FEF9EB]",
+      trend: "Aguardando resposta",
+      trendUp: false,
+    },
+    {
+      title: "Itens sem cotação",
+      href: "/licitacoes",
+      value: String(itensSemCotacao ?? 0),
+      description: "Precisam de fornecedor",
+      icon: AlertCircle,
+      color: "text-[#E02424]",
+      bg: "bg-[#FEF0F0]",
+      trend: "Ação necessária",
+      trendUp: false,
+    },
+    {
+      title: "Propostas para envio",
+      href: "/licitacoes",
+      value: String(propostasParaEnvio),
+      description: "Prontas para submissão",
+      icon: CheckCircle2,
+      color: "text-[#0E9F6E]",
+      bg: "bg-[#E8F7F2]",
+      trend: propostasParaEnvio > 0 ? "Aguardando envio" : "Nenhuma pendente",
+      trendUp: propostasParaEnvio > 0,
+    },
+  ];
+
+  const proximosPrazos = licitacoes.filter((l) =>
+    ["em_cotacao", "proposta_pronta"].includes(l.status) && l.data_pregao
+  );
+
   return (
     <div className="space-y-8">
       {/* Page header */}
       <div>
         <h1 className="text-xl font-semibold text-neutral-900">Dashboard</h1>
         <p className="text-sm text-neutral-500 mt-0.5">
-          Visão geral das licitações e cotações — atualizado hoje
+          Visão geral das licitações e cotações — atualizado agora
         </p>
       </div>
 
@@ -128,7 +149,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-sm font-semibold text-neutral-900">Licitações recentes</h2>
-            <p className="text-xs text-neutral-400 mt-0.5">{licitacoes.length} licitações no total</p>
+            <p className="text-xs text-neutral-400 mt-0.5">{licitacoes.length} licitaç{licitacoes.length !== 1 ? "ões" : "ão"} no total</p>
           </div>
           <Link
             href="/licitacoes"
@@ -140,31 +161,37 @@ export default function DashboardPage() {
         </div>
 
         <NeonCard className="shadow-card overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-neutral-100">
-                <th className="text-left px-5 py-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">
-                  Licitação / Órgão
-                </th>
-                <th className="text-right px-5 py-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">
-                  Valor estimado
-                </th>
-                <th className="text-center px-5 py-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">
-                  Pregão
-                </th>
-                <th className="text-center px-5 py-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">
-                  Status
-                </th>
-                <th className="px-5 py-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">
-                  Progresso
-                </th>
-                <th className="px-5 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-neutral-50">
-              {licitacoes.map((lic) => {
-                const progress = getLicitacaoProgress(lic);
-                return (
+          {licitacoes.length === 0 ? (
+            <div className="p-12 text-center">
+              <p className="text-sm text-neutral-400">Nenhuma licitação cadastrada</p>
+              <Link href="/licitacoes" className="text-xs text-[#1A56DB] hover:underline mt-2 block">
+                Cadastrar primeira licitação →
+              </Link>
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-neutral-100">
+                  <th className="text-left px-5 py-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Licitação / Órgão
+                  </th>
+                  <th className="text-right px-5 py-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Valor estimado
+                  </th>
+                  <th className="text-center px-5 py-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Pregão
+                  </th>
+                  <th className="text-center px-5 py-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Status
+                  </th>
+                  <th className="px-5 py-3 text-xs font-medium text-neutral-500 uppercase tracking-wide">
+                    Progresso
+                  </th>
+                  <th className="px-5 py-3"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-50">
+                {licitacoes.slice(0, 10).map((lic) => (
                   <tr
                     key={lic.id}
                     className="hover:bg-neutral-50 transition-colors duration-100 group relative cursor-pointer"
@@ -176,32 +203,30 @@ export default function DashboardPage() {
                           {lic.orgao}
                         </p>
                         <p className="text-xs text-neutral-400 mt-0.5 truncate max-w-[300px]">
-                          {lic.numeroProcesso}
+                          {lic.numero_processo}
                         </p>
                       </div>
                     </td>
                     <td className="px-5 py-4 text-right">
                       <span className="text-sm font-medium text-neutral-800 tabular-nums">
-                        {formatCurrency(lic.valorEstimado)}
+                        {lic.valor_estimado != null ? formatCurrency(lic.valor_estimado) : "—"}
                       </span>
                     </td>
                     <td className="px-5 py-4 text-center">
                       <span className="text-sm text-neutral-600">
-                        {formatDate(lic.dataPregao)}
+                        {lic.data_pregao ? formatDate(lic.data_pregao) : "—"}
                       </span>
                     </td>
                     <td className="px-5 py-4 text-center">
-                      <span
-                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getStatusColor(lic.status)}`}
-                      >
-                        {getStatusLabel(lic.status)}
+                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${getStatusColor(lic.status as LicitacaoStatus)}`}>
+                        {getStatusLabel(lic.status as LicitacaoStatus)}
                       </span>
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-2 min-w-[120px]">
-                        <Progress value={progress} className="flex-1" />
+                        <Progress value={lic.progresso} className="flex-1" />
                         <span className="text-xs text-neutral-500 tabular-nums w-8 text-right">
-                          {progress}%
+                          {lic.progresso}%
                         </span>
                       </div>
                     </td>
@@ -215,14 +240,14 @@ export default function DashboardPage() {
                       </Link>
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
+          )}
         </NeonCard>
       </div>
 
-      {/* Quick actions */}
+      {/* Quick actions + Próximos prazos */}
       <div className="grid grid-cols-3 gap-4">
         <NeonCard className="p-5 shadow-card">
           <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-3">
@@ -262,12 +287,13 @@ export default function DashboardPage() {
           <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-3">
             Próximos prazos
           </h3>
-          <div className="space-y-3">
-            {licitacoes
-              .filter((l) => ["em_cotacao", "proposta_pronta"].includes(l.status))
-              .map((lic) => {
+          {proximosPrazos.length === 0 ? (
+            <p className="text-xs text-neutral-400">Nenhum prazo próximo</p>
+          ) : (
+            <div className="space-y-3">
+              {proximosPrazos.map((lic) => {
                 const daysUntil = Math.ceil(
-                  (new Date(lic.dataPregao).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                  (new Date(lic.data_pregao!).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
                 );
                 return (
                   <div key={lic.id} className="flex items-center gap-3">
@@ -287,18 +313,17 @@ export default function DashboardPage() {
                         {lic.orgao}
                       </p>
                       <p className="text-xs text-neutral-400">
-                        Pregão em {formatDate(lic.dataPregao)}
+                        Pregão em {formatDate(lic.data_pregao!)}
                       </p>
                     </div>
-                    <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded-full border ${getStatusColor(lic.status)}`}
-                    >
-                      {getStatusLabel(lic.status)}
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${getStatusColor(lic.status as LicitacaoStatus)}`}>
+                      {getStatusLabel(lic.status as LicitacaoStatus)}
                     </span>
                   </div>
                 );
               })}
-          </div>
+            </div>
+          )}
         </NeonCard>
       </div>
     </div>
