@@ -3,8 +3,8 @@ import "./globals.css";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "LicitaMed — Gestão de Cotações Hospitalares",
-  description: "Plataforma de gestão de cotações para licitações hospitalares públicas",
+  title: "POWER MED — Gestão de Licitações Hospitalares",
+  description: "Plataforma de gestão de licitações e cotações hospitalares | POWER MED Material Hospitalar",
 };
 
 export default function RootLayout({
