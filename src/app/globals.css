@@ -2,26 +2,75 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F8F9FA;
+  --foreground: #0D0D0D;
+  --card: #ffffff;
+  --border: #E9ECEF;
+  --primary: #1A56DB;
+  --success: #0E9F6E;
+  --danger: #E02424;
+  --warning: #D97706;
+  --muted: #6C757D;
+  --sidebar-width: 240px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #DEE2E6 transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: #DEE2E6;
+    border-radius: 2px;
+  }
+}
+
+@layer components {
+  .table-row-hover {
+    @apply hover:bg-neutral-50 transition-colors duration-100;
+  }
+
+  .card-base {
+    @apply bg-white rounded-lg border border-neutral-200 shadow-card;
+  }
+
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium text-sm px-4 py-2 rounded-md transition-colors duration-150;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-neutral-50 text-neutral-700 font-medium text-sm px-4 py-2 rounded-md border border-neutral-200 transition-colors duration-150;
+  }
+
+  .input-base {
+    @apply w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-transparent transition-all duration-150;
   }
 }
