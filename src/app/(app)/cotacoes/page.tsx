@@ -59,7 +59,7 @@ export default function CotacoesPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border border-neutral-200 shadow-card p-4">
+        <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card p-4">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-md bg-neutral-100 flex items-center justify-center">
               <Send className="w-3.5 h-3.5 text-neutral-500" />
@@ -70,7 +70,7 @@ export default function CotacoesPage() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-neutral-200 shadow-card p-4">
+        <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card p-4">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-md bg-green-50 flex items-center justify-center">
               <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
@@ -81,7 +81,7 @@ export default function CotacoesPage() {
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-neutral-200 shadow-card p-4">
+        <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card p-4">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-md bg-yellow-50 flex items-center justify-center">
               <Clock className="w-3.5 h-3.5 text-yellow-600" />
@@ -106,7 +106,7 @@ export default function CotacoesPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg border border-neutral-200 shadow-card overflow-hidden">
+      <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card overflow-hidden">
         <table className="w-full">
           <thead>
             <tr className="border-b border-neutral-100">

@@ -316,7 +316,7 @@ export default function RadarPage() {
       </div>
 
       {/* Search panel */}
-      <div className="bg-white rounded-lg border border-neutral-200 shadow-card p-5">
+      <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card p-5">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
           <div>
             <label className="text-xs font-medium text-neutral-600 mb-1.5 block">Categoria</label>
@@ -480,7 +480,7 @@ export default function RadarPage() {
             {pageItems.map((forn) => (
               <div
                 key={forn.cnpj}
-                className="bg-white rounded-lg border border-neutral-200 shadow-card hover:shadow-card-hover hover:border-neutral-300 transition-all duration-150 p-5 flex flex-col"
+                className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card p-5 flex flex-col"
               >
                 {/* Card header */}
                 <div className="flex items-start gap-3">

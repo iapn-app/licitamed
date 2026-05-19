@@ -19,6 +19,7 @@ import {
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle, CardValue, CardDescription } from "@/components/ui/card";
+import { NeonCard } from "@/components/shared/neon-card";
 
 const metricCards = [
   {
@@ -95,7 +96,7 @@ export default function DashboardPage() {
           const Icon = metric.icon;
           return (
             <Link key={metric.title} href={metric.href} className="block">
-              <Card className="neon-card hover:shadow-card-hover transition-all duration-150 cursor-pointer h-full">
+              <Card className="neon-card cursor-pointer h-full">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <CardTitle>{metric.title}</CardTitle>
@@ -138,7 +139,7 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card overflow-hidden">
+        <NeonCard className="shadow-card overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-neutral-100">
@@ -218,12 +219,12 @@ export default function DashboardPage() {
               })}
             </tbody>
           </table>
-        </div>
+        </NeonCard>
       </div>
 
       {/* Quick actions */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="neon-card bg-white rounded-lg border border-neutral-200 p-5 shadow-card">
+        <NeonCard className="p-5 shadow-card">
           <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-3">
             Ações rápidas
           </h3>
@@ -255,9 +256,9 @@ export default function DashboardPage() {
               <ArrowRight className="w-3.5 h-3.5 text-neutral-300 group-hover:text-[#1A56DB] transition-colors" />
             </Link>
           </div>
-        </div>
+        </NeonCard>
 
-        <div className="neon-card col-span-2 bg-white rounded-lg border border-neutral-200 p-5 shadow-card">
+        <NeonCard className="col-span-2 p-5 shadow-card">
           <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-3">
             Próximos prazos
           </h3>
@@ -298,7 +299,7 @@ export default function DashboardPage() {
                 );
               })}
           </div>
-        </div>
+        </NeonCard>
       </div>
     </div>
   );

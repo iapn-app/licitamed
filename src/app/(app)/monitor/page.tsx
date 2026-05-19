@@ -404,7 +404,7 @@ export default function MonitorPage() {
         ].map(({ icon: Icon, color, iconColor, label, value, desc }) => (
           <div
             key={label}
-            className="bg-white rounded-lg border border-neutral-200 shadow-card p-5"
+            className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card p-5"
           >
             <div className="flex items-center gap-2 mb-3">
               <div className={cn("w-8 h-8 rounded-md flex items-center justify-center", color)}>
@@ -419,7 +419,7 @@ export default function MonitorPage() {
       </div>
 
       {/* Config panel */}
-      <div className="bg-white rounded-lg border border-neutral-200 shadow-card">
+      <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card">
         <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100">
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4 text-neutral-400" />
@@ -643,7 +643,7 @@ export default function MonitorPage() {
             {filteredEditais.map((edital) => (
               <div
                 key={edital.id}
-                className="bg-white rounded-lg border border-neutral-200 shadow-card hover:shadow-card-hover hover:border-neutral-300 transition-all duration-150 p-5 flex flex-col gap-3"
+                className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card p-5 flex flex-col gap-3"
               >
                 <div className="flex items-start justify-between gap-2">
                   <p className="text-sm font-semibold text-neutral-900 leading-snug">
@@ -712,7 +712,7 @@ export default function MonitorPage() {
       </div>
 
       {/* Como funciona */}
-      <div className="bg-white rounded-lg border border-neutral-200 shadow-card p-6">
+      <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card p-6">
         <h2 className="text-sm font-semibold text-neutral-900 mb-6">Como funciona</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
           <div className="hidden md:block absolute top-5 left-[calc(33%+24px)] right-[calc(33%+24px)] h-px bg-neutral-200" />
@@ -757,7 +757,7 @@ export default function MonitorPage() {
       {/* Histórico */}
       <div>
         <h2 className="text-sm font-semibold text-neutral-900 mb-4">Histórico de alertas</h2>
-        <div className="bg-white rounded-lg border border-neutral-200 shadow-card overflow-hidden">
+        <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-100 bg-neutral-50">

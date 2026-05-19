@@ -119,7 +119,7 @@ export default function LicitacoesPage() {
 
           return (
             <Link key={lic.id} href={`/licitacoes/${lic.id}`}>
-              <div className="bg-white rounded-lg border border-neutral-200 shadow-card hover:shadow-card-hover hover:border-neutral-300 transition-all duration-150 p-5 group">
+              <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card p-5 group">
                 <div className="flex items-start gap-4">
                   {/* Icon */}
                   <div className="w-10 h-10 rounded-md bg-neutral-50 border border-neutral-200 flex items-center justify-center flex-shrink-0 mt-0.5">
