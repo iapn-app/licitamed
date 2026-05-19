@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Plus,
   Search,
@@ -9,6 +10,8 @@ import {
   Phone,
   CheckCircle2,
   AlertTriangle,
+  Radar,
+  ArrowRight,
 } from "lucide-react";
 import {
   fornecedores,
@@ -101,6 +104,30 @@ export default function FornecedoresPage() {
           Novo Fornecedor
         </Button>
       </div>
+
+      {/* Radar banner */}
+      <Link
+        href="/fornecedores/radar"
+        className="flex items-center justify-between gap-4 bg-gradient-to-r from-[#EBF0FD] to-blue-50 border border-[#1A56DB]/20 rounded-lg px-5 py-4 hover:border-[#1A56DB]/40 transition-colors group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-md bg-[#1A56DB]/10 flex items-center justify-center flex-shrink-0">
+            <Radar className="w-4 h-4 text-[#1A56DB]" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#1A56DB]">
+              Quer expandir sua base de fornecedores?
+            </p>
+            <p className="text-xs text-neutral-500 mt-0.5">
+              Busque novos fornecedores em todo o Brasil usando dados públicos do governo federal
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1A56DB] whitespace-nowrap flex-shrink-0 group-hover:gap-2.5 transition-all">
+          Buscar no Radar
+          <ArrowRight className="w-3.5 h-3.5" />
+        </div>
+      </Link>
 
       {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">

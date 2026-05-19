@@ -1,5 +1,6 @@
 "use client";
 
+import type { ComponentType } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -10,14 +11,37 @@ import {
   FolderOpen,
   Settings,
   Activity,
+  Radar,
+  Radio,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navItems = [
+type NavChild = {
+  href: string;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+};
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  children?: NavChild[];
+};
+
+const navItems: NavItem[] = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/licitacoes", label: "Licitações", icon: FileText },
-  { href: "/fornecedores", label: "Fornecedores", icon: Users },
+  {
+    href: "/fornecedores",
+    label: "Fornecedores",
+    icon: Users,
+    children: [
+      { href: "/fornecedores/radar", label: "Radar", icon: Radar },
+    ],
+  },
   { href: "/cotacoes", label: "Cotações", icon: ClipboardList },
+  { href: "/monitor", label: "Monitor", icon: Radio },
   { href: "/documentos", label: "Documentos", icon: FolderOpen },
   { href: "/configuracoes", label: "Configurações", icon: Settings },
 ];
@@ -40,31 +64,61 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto scrollbar-thin">
-        {navItems.map(({ href, label, icon: Icon }) => {
+        {navItems.map(({ href, label, icon: Icon, children }) => {
           const isActive =
             href === "/"
               ? pathname === "/"
-              : pathname.startsWith(href);
+              : pathname === href || pathname.startsWith(href + "/");
 
           return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-100",
-                isActive
-                  ? "bg-[#EBF0FD] text-[#1A56DB]"
-                  : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
-              )}
-            >
-              <Icon
+            <div key={href}>
+              <Link
+                href={href}
                 className={cn(
-                  "w-4 h-4 flex-shrink-0",
-                  isActive ? "text-[#1A56DB]" : "text-neutral-400"
+                  "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-100",
+                  isActive
+                    ? "bg-[#EBF0FD] text-[#1A56DB]"
+                    : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                 )}
-              />
-              {label}
-            </Link>
+              >
+                <Icon
+                  className={cn(
+                    "w-4 h-4 flex-shrink-0",
+                    isActive ? "text-[#1A56DB]" : "text-neutral-400"
+                  )}
+                />
+                {label}
+              </Link>
+
+              {children && isActive && (
+                <div className="ml-7 pl-3 border-l border-neutral-200 mt-0.5 mb-0.5 space-y-0.5">
+                  {children.map(({ href: ch, label: cl, icon: ChildIcon }) => {
+                    const childActive =
+                      pathname === ch || pathname.startsWith(ch + "/");
+                    return (
+                      <Link
+                        key={ch}
+                        href={ch}
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-100",
+                          childActive
+                            ? "bg-[#EBF0FD] text-[#1A56DB]"
+                            : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700"
+                        )}
+                      >
+                        <ChildIcon
+                          className={cn(
+                            "w-3.5 h-3.5 flex-shrink-0",
+                            childActive ? "text-[#1A56DB]" : "text-neutral-400"
+                          )}
+                        />
+                        {cl}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
       </nav>
