@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardValue, CardDescription } 
 const metricCards = [
   {
     title: "Licitações ativas",
+    href: "/licitacoes",
     value: String(DASHBOARD_METRICS.licitacoesAtivas),
     description: "Em cotação, disputa ou proposta",
     icon: TrendingUp,
@@ -33,6 +34,7 @@ const metricCards = [
   },
   {
     title: "Valor total em aberto",
+    href: "/licitacoes",
     value: formatCurrency(DASHBOARD_METRICS.valorTotalAberto),
     description: "Valor estimado das licitações ativas",
     icon: DollarSign,
@@ -43,6 +45,7 @@ const metricCards = [
   },
   {
     title: "Fornecedores aguardando",
+    href: "/cotacoes",
     value: String(DASHBOARD_METRICS.fornecedoresAguardando),
     description: "Cotações enviadas sem resposta",
     icon: Clock,
@@ -53,6 +56,7 @@ const metricCards = [
   },
   {
     title: "Itens sem cotação",
+    href: "/licitacoes",
     value: String(DASHBOARD_METRICS.itensSemCotacao),
     description: "Precisam de fornecedor",
     icon: AlertCircle,
@@ -63,6 +67,7 @@ const metricCards = [
   },
   {
     title: "Propostas para envio",
+    href: "/licitacoes",
     value: String(DASHBOARD_METRICS.propostasParaEnvio),
     description: "Prontas para submissão",
     icon: CheckCircle2,
@@ -89,28 +94,30 @@ export default function DashboardPage() {
         {metricCards.map((metric) => {
           const Icon = metric.icon;
           return (
-            <Card key={metric.title} className="hover:shadow-card-hover transition-shadow duration-150">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <CardTitle>{metric.title}</CardTitle>
-                  <div className={`w-7 h-7 rounded-md ${metric.bg} flex items-center justify-center`}>
-                    <Icon className={`w-3.5 h-3.5 ${metric.color}`} />
+            <Link key={metric.title} href={metric.href} className="block">
+              <Card className="hover:shadow-card-hover hover:border-[#1A56DB]/25 transition-all duration-150 cursor-pointer h-full">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle>{metric.title}</CardTitle>
+                    <div className={`w-7 h-7 rounded-md ${metric.bg} flex items-center justify-center`}>
+                      <Icon className={`w-3.5 h-3.5 ${metric.color}`} />
+                    </div>
                   </div>
-                </div>
-                <CardValue className="text-xl mt-2">{metric.value}</CardValue>
-                <CardDescription>{metric.description}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-1 text-xs">
-                  {metric.trendUp ? (
-                    <ChevronUp className="w-3 h-3 text-[#0E9F6E]" />
-                  ) : (
-                    <ChevronDown className="w-3 h-3 text-neutral-400" />
-                  )}
-                  <span className="text-neutral-400">{metric.trend}</span>
-                </div>
-              </CardContent>
-            </Card>
+                  <CardValue className="text-xl mt-2">{metric.value}</CardValue>
+                  <CardDescription>{metric.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center gap-1 text-xs">
+                    {metric.trendUp ? (
+                      <ChevronUp className="w-3 h-3 text-[#0E9F6E]" />
+                    ) : (
+                      <ChevronDown className="w-3 h-3 text-neutral-400" />
+                    )}
+                    <span className="text-neutral-400">{metric.trend}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           );
         })}
       </div>
@@ -159,9 +166,10 @@ export default function DashboardPage() {
                 return (
                   <tr
                     key={lic.id}
-                    className="hover:bg-neutral-50 transition-colors duration-100 group"
+                    className="hover:bg-neutral-50 transition-colors duration-100 group relative cursor-pointer"
                   >
                     <td className="px-5 py-4">
+                      <Link href={`/licitacoes/${lic.id}`} className="absolute inset-0 z-10" aria-label={`Ver licitação ${lic.orgao}`} />
                       <div>
                         <p className="text-sm font-medium text-neutral-900 leading-tight">
                           {lic.orgao}

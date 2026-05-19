@@ -74,6 +74,9 @@ export function Sidebar() {
             <div key={href}>
               <Link
                 href={href}
+                style={isActive
+                  ? { boxShadow: "0 4px 15px rgba(26, 86, 219, 0.5), 0 2px 6px rgba(26, 86, 219, 0.3)", transition: "box-shadow 0.3s ease" }
+                  : { transition: "box-shadow 0.3s ease" }}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-100",
                   isActive
