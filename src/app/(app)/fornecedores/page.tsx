@@ -187,7 +187,7 @@ export default function FornecedoresPage() {
         {filtered.map((forn) => (
           <div
             key={forn.id}
-            className="bg-white rounded-lg border border-neutral-200 shadow-card hover:shadow-card-hover hover:border-neutral-300 transition-all duration-150 p-5"
+            className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card hover:shadow-card-hover transition-all duration-150 p-5"
           >
             {/* Header */}
             <div className="flex items-start justify-between gap-3">

@@ -95,7 +95,7 @@ export default function DashboardPage() {
           const Icon = metric.icon;
           return (
             <Link key={metric.title} href={metric.href} className="block">
-              <Card className="hover:shadow-card-hover hover:border-[#1A56DB]/25 transition-all duration-150 cursor-pointer h-full">
+              <Card className="neon-card hover:shadow-card-hover transition-all duration-150 cursor-pointer h-full">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
                     <CardTitle>{metric.title}</CardTitle>
