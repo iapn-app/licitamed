@@ -702,7 +702,7 @@ export default function MonitorPage() {
                       })
                     }
                   >
-                    Importar para LicitaMed
+                    Importar para POWER MED
                   </Button>
                 </div>
               </div>
@@ -728,7 +728,7 @@ export default function MonitorPage() {
                 step: "2",
                 icon: Search,
                 title: "Monitoramento automático",
-                desc: "O LicitaMed consulta o PNCP automaticamente e filtra editais hospitalares para você",
+                desc: "O POWER MED consulta o PNCP automaticamente e filtra editais hospitalares para você",
               },
               {
                 step: "3",

@@ -14,7 +14,7 @@ export async function GET(
     const response = await fetch(`https://publica.cnpj.ws/cnpj/${cnpj}`, {
       headers: {
         Accept: "application/json",
-        "User-Agent": "LicitaMed/1.0",
+        "User-Agent": "POWER MED/1.0",
       },
       signal: AbortSignal.timeout(8000),
     });

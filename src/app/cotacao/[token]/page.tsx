@@ -124,9 +124,7 @@ export default function CotacaoPortalPage({ params }: { params: { token: string 
             <div className="w-7 h-7 rounded-md bg-[#06B6D4] flex items-center justify-center">
               <Activity className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
-            <span className="text-sm font-semibold text-neutral-900">LicitaMed</span>
-            <span className="text-neutral-200 text-sm">·</span>
-            <span className="text-sm text-neutral-500">POWER MED</span>
+            <span className="text-sm font-semibold text-neutral-900">POWER MED</span>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-neutral-500">
             <Package className="w-3.5 h-3.5" />
@@ -347,7 +345,7 @@ export default function CotacaoPortalPage({ params }: { params: { token: string 
         )}
 
         <p className="text-center text-xs text-neutral-300 pb-6">
-          LicitaMed · POWER MED · {new Date().getFullYear()}
+          POWER MED · {new Date().getFullYear()}
         </p>
       </main>
     </div>
