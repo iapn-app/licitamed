@@ -1,4 +1,5 @@
 export type LicitacaoStatus =
+  | "em_analise"
   | "em_cotacao"
   | "proposta_pronta"
   | "em_disputa"
@@ -103,24 +104,26 @@ export function getCotacoesByItem(licitacaoId: string, itemId: string): Cotacao[
 
 export function getStatusLabel(status: LicitacaoStatus): string {
   const labels: Record<LicitacaoStatus, string> = {
+    em_analise: "Em análise",
     em_cotacao: "Em cotação",
     proposta_pronta: "Proposta pronta",
     em_disputa: "Em disputa",
     vencida: "Vencida",
     perdida: "Perdida",
   };
-  return labels[status];
+  return labels[status] ?? status;
 }
 
 export function getStatusColor(status: LicitacaoStatus): string {
   const colors: Record<LicitacaoStatus, string> = {
+    em_analise: "bg-blue-50 text-blue-700 border-blue-200",
     em_cotacao: "bg-cyan-50 text-cyan-700 border-cyan-200",
     proposta_pronta: "bg-purple-50 text-purple-700 border-purple-200",
     em_disputa: "bg-yellow-50 text-yellow-700 border-yellow-200",
     vencida: "bg-green-50 text-green-700 border-green-200",
     perdida: "bg-red-50 text-red-700 border-red-200",
   };
-  return colors[status];
+  return colors[status] ?? "bg-neutral-50 text-neutral-700 border-neutral-200";
 }
 
 export function getCategoriaColor(categoria: ItemCategoria): string {

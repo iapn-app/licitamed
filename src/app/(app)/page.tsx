@@ -1,4 +1,4 @@
-﻿import {
+import {
   TrendingUp,
   DollarSign,
   Clock,
@@ -7,6 +7,8 @@
   ArrowRight,
   ChevronUp,
   ChevronDown,
+  FileText,
+  Plus,
 } from "lucide-react";
 import Link from "next/link";
 import { getStatusLabel, getStatusColor } from "@/lib/mock-data";
@@ -20,11 +22,11 @@ import type { LicitacaoStatus } from "@/lib/mock-data";
 
 export const dynamic = "force-dynamic";
 
-const ACTIVE_STATUSES = ["em_cotacao", "proposta_pronta", "em_disputa"];
+const ACTIVE_STATUSES = ["em_analise", "em_cotacao", "proposta_pronta", "em_disputa"];
 
 export default async function DashboardPage() {
   const [
-    { data: licitacoesData },
+    { data: licitacoesData, error: licitacoesError },
     { count: fornecedoresAguardando },
     { count: itensSemCotacao },
   ] = await Promise.all([
@@ -32,6 +34,10 @@ export default async function DashboardPage() {
     supabase.from("cotacoes").select("*", { count: "exact", head: true }).eq("status", "enviada"),
     supabase.from("itens_licitacao").select("*", { count: "exact", head: true }).eq("status", "sem_cotacao"),
   ]);
+
+  if (licitacoesError) {
+    console.error("Dashboard: erro ao buscar licitações:", licitacoesError.message);
+  }
 
   const licitacoes: LicitacaoRow[] = licitacoesData ?? [];
 
@@ -44,23 +50,23 @@ export default async function DashboardPage() {
       title: "Licitações ativas",
       href: "/licitacoes",
       value: String(licitacoesAtivas.length),
-      description: "Em cotação, disputa ou proposta",
+      description: "Em análise, cotação ou disputa",
       icon: TrendingUp,
       color: "text-[#06B6D4]",
       bg: "bg-[#ECFEFF]",
       trend: `${licitacoes.length} total`,
-      trendUp: true,
+      trendUp: licitacoesAtivas.length > 0,
     },
     {
       title: "Valor total em aberto",
       href: "/licitacoes",
-      value: formatCurrency(valorTotalAberto),
+      value: valorTotalAberto > 0 ? formatCurrency(valorTotalAberto) : "R$ 0",
       description: "Valor estimado das licitações ativas",
       icon: DollarSign,
       color: "text-[#0E9F6E]",
       bg: "bg-[#E8F7F2]",
-      trend: "Licitações ativas",
-      trendUp: true,
+      trend: licitacoesAtivas.length > 0 ? "Licitações ativas" : "Nenhuma ativa",
+      trendUp: licitacoesAtivas.length > 0,
     },
     {
       title: "Fornecedores aguardando",
@@ -81,7 +87,7 @@ export default async function DashboardPage() {
       icon: AlertCircle,
       color: "text-[#E02424]",
       bg: "bg-[#FEF0F0]",
-      trend: "Ação necessária",
+      trend: (itensSemCotacao ?? 0) > 0 ? "Ação necessária" : "Tudo em ordem",
       trendUp: false,
     },
     {
@@ -98,7 +104,7 @@ export default async function DashboardPage() {
   ];
 
   const proximosPrazos = licitacoes.filter((l) =>
-    ["em_cotacao", "proposta_pronta"].includes(l.status) && l.data_pregao
+    ["em_cotacao", "proposta_pronta", "em_analise"].includes(l.status) && l.data_pregao
   );
 
   return (
@@ -149,23 +155,39 @@ export default async function DashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-sm font-semibold text-neutral-900">Licitações recentes</h2>
-            <p className="text-xs text-neutral-400 mt-0.5">{licitacoes.length} licitaç{licitacoes.length !== 1 ? "ões" : "ão"} no total</p>
+            <p className="text-xs text-neutral-400 mt-0.5">
+              {licitacoes.length} licitaç{licitacoes.length !== 1 ? "ões" : "ão"} no total
+            </p>
           </div>
-          <Link
-            href="/licitacoes"
-            className="flex items-center gap-1 text-xs font-medium text-[#06B6D4] hover:text-[#0891B2] transition-colors"
-          >
-            Ver todas
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          {licitacoes.length > 0 && (
+            <Link
+              href="/licitacoes"
+              className="flex items-center gap-1 text-xs font-medium text-[#06B6D4] hover:text-[#0891B2] transition-colors"
+            >
+              Ver todas
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          )}
         </div>
 
         <NeonCard className="shadow-card overflow-hidden">
           {licitacoes.length === 0 ? (
-            <div className="p-12 text-center">
-              <p className="text-sm text-neutral-400">Nenhuma licitação cadastrada</p>
-              <Link href="/licitacoes" className="text-xs text-[#06B6D4] hover:underline mt-2 block">
-                Cadastrar primeira licitação →
+            <div className="flex flex-col items-center justify-center py-16 text-center px-6">
+              <div className="w-12 h-12 rounded-full bg-[#ECFEFF] flex items-center justify-center mb-4">
+                <FileText className="w-6 h-6 text-[#06B6D4]" />
+              </div>
+              <p className="text-sm font-semibold text-neutral-800 mb-1">
+                Nenhuma licitação cadastrada ainda
+              </p>
+              <p className="text-xs text-neutral-400 mb-5 max-w-xs">
+                Cadastre a primeira licitação para começar a acompanhar os processos aqui no Dashboard.
+              </p>
+              <Link
+                href="/licitacoes"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#06B6D4] hover:bg-[#0891B2] rounded-md transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Nova Licitação
               </Link>
             </div>
           ) : (
@@ -288,28 +310,30 @@ export default async function DashboardPage() {
             Próximos prazos
           </h3>
           {proximosPrazos.length === 0 ? (
-            <p className="text-xs text-neutral-400">Nenhum prazo próximo</p>
+            <p className="text-xs text-neutral-400">Nenhum prazo cadastrado</p>
           ) : (
             <div className="space-y-3">
-              {proximosPrazos.map((lic) => {
+              {proximosPrazos.slice(0, 5).map((lic) => {
                 const daysUntil = Math.ceil(
                   (new Date(lic.data_pregao!).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
                 );
                 return (
-                  <div key={lic.id} className="flex items-center gap-3">
+                  <Link key={lic.id} href={`/licitacoes/${lic.id}`} className="flex items-center gap-3 group">
                     <div
                       className={`w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0 text-xs font-bold ${
-                        daysUntil <= 7
+                        daysUntil <= 0
+                          ? "bg-red-50 text-red-600"
+                          : daysUntil <= 7
                           ? "bg-red-50 text-red-600"
                           : daysUntil <= 14
                           ? "bg-yellow-50 text-yellow-600"
                           : "bg-neutral-100 text-neutral-500"
                       }`}
                     >
-                      {daysUntil > 0 ? daysUntil : "Hoje"}
+                      {daysUntil > 0 ? daysUntil : "Hj"}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-neutral-800 truncate">
+                      <p className="text-sm font-medium text-neutral-800 truncate group-hover:text-[#06B6D4] transition-colors">
                         {lic.orgao}
                       </p>
                       <p className="text-xs text-neutral-400">
@@ -319,7 +343,7 @@ export default async function DashboardPage() {
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${getStatusColor(lic.status as LicitacaoStatus)}`}>
                       {getStatusLabel(lic.status as LicitacaoStatus)}
                     </span>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
