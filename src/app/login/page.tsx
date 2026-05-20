@@ -52,10 +52,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="h-screen overflow-hidden flex">
       {/* ── LEFT PANEL ──────────────────────────────────────────────── */}
       <div
-        className="hidden md:flex md:w-[55%] relative flex-col overflow-hidden"
+        className="hidden md:flex md:w-[55%] h-full relative flex-col overflow-hidden"
         style={{
           background: "linear-gradient(135deg, #0891B2 0%, #0e6685 50%, #164E63 100%)",
         }}
@@ -80,38 +80,38 @@ export default function LoginPage() {
         />
 
         {/* Logo — top left */}
-        <div className="relative z-10 px-10 pt-10">
+        <div className="relative z-10 px-10 pt-8 flex-shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-md bg-white/20 flex items-center justify-center">
-              <Activity className="w-4.5 h-4.5 text-white" strokeWidth={2.5} />
+              <Activity className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
             <span className="text-sm font-bold text-white tracking-wide">POWER MED</span>
           </div>
         </div>
 
         {/* Main content — vertically centered */}
-        <div className="relative z-10 flex-1 flex flex-col justify-center px-10 py-12">
+        <div className="relative z-10 flex-1 flex flex-col justify-center px-10 py-6 min-h-0">
           {/* Badge */}
-          <div className="mb-10">
+          <div className="mb-6">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white border border-white/20 bg-white/10">
               Sistema Exclusivo · Desenvolvido por Rafael Carvalho
             </span>
           </div>
 
           {/* Hero headline */}
-          <h1 className="text-4xl font-bold text-white leading-tight mb-6 tracking-tight">
+          <h1 className="text-3xl font-bold text-white leading-tight mb-4 tracking-tight">
             Da planilha ao pregão.<br />
             Do edital ao pagamento.<br />
             Tudo em um só lugar.
           </h1>
 
           {/* Subtitle */}
-          <p className="text-base text-white/80 leading-relaxed max-w-md mb-12">
+          <p className="text-sm text-white/80 leading-relaxed max-w-md mb-8">
             A central inteligente de licitações hospitalares da POWER MED — do monitoramento de editais até o recebimento do pagamento.
           </p>
 
           {/* Feature bullets */}
-          <div className="space-y-6">
+          <div className="space-y-4">
             {[
               {
                 Icon: Radio,
@@ -143,7 +143,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <div className="relative z-10 px-10 pb-8">
+        <div className="relative z-10 px-10 pb-6 flex-shrink-0">
           <p className="text-[11px] text-white/50">
             POWER MED Material Hospitalar LTDA · CNPJ 42.241.234/0001-70
           </p>
@@ -151,9 +151,9 @@ export default function LoginPage() {
       </div>
 
       {/* ── RIGHT PANEL ─────────────────────────────────────────────── */}
-      <div className="flex-1 md:w-[45%] flex flex-col items-center justify-center bg-white px-6 py-12">
+      <div className="flex-1 md:w-[45%] h-full flex flex-col items-center justify-center bg-white px-6 overflow-hidden">
         {/* Mobile-only logo */}
-        <div className="flex md:hidden items-center gap-2.5 mb-10">
+        <div className="flex md:hidden items-center gap-2.5 mb-8">
           <div className="w-9 h-9 rounded-md bg-[#06B6D4] flex items-center justify-center">
             <Activity className="w-5 h-5 text-white" strokeWidth={2.5} />
           </div>
@@ -162,14 +162,14 @@ export default function LoginPage() {
 
         <div className="w-full max-w-sm">
           {/* Form heading */}
-          <div className="mb-8">
+          <div className="mb-7">
             <h2 className="text-2xl font-bold text-neutral-900">Bem-vindo de volta</h2>
             <p className="text-sm text-neutral-500 mt-1.5 leading-snug">
               Entre com suas credenciais para acessar o sistema
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
             <div>
               <label className="text-xs font-semibold text-neutral-600 mb-1.5 block uppercase tracking-wide">
@@ -216,7 +216,7 @@ export default function LoginPage() {
 
             {/* Error */}
             {error && (
-              <div className="flex items-start gap-2.5 bg-red-50 border border-red-100 rounded-lg px-3.5 py-3">
+              <div className="flex items-start gap-2.5 bg-red-50 border border-red-100 rounded-lg px-3.5 py-2.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 flex-shrink-0" />
                 <p className="text-xs text-red-600 leading-relaxed">{error}</p>
               </div>
@@ -243,7 +243,7 @@ export default function LoginPage() {
           </form>
 
           {/* Footer note */}
-          <p className="text-center text-xs text-neutral-400 mt-8">
+          <p className="text-center text-xs text-neutral-400 mt-6">
             Acesso restrito · POWER MED
           </p>
         </div>
