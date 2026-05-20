@@ -1,4 +1,4 @@
-import { CheckCircle2, Circle } from "lucide-react";
+﻿import { CheckCircle2, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { EtapaPipeline } from "@/types/execucao";
 
@@ -36,7 +36,7 @@ export function ExecutionPipeline({ etapaAtual }: ExecutionPipelineProps) {
                 <div
                   className={cn(
                     "w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all",
-                    done ? "bg-green-500 border-green-500" : current ? "bg-[#1A56DB] border-[#1A56DB]" : "bg-white border-neutral-300"
+                    done ? "bg-green-500 border-green-500" : current ? "bg-[#06B6D4] border-[#06B6D4]" : "bg-white border-neutral-300"
                   )}
                 >
                   {done ? (
@@ -50,7 +50,7 @@ export function ExecutionPipeline({ etapaAtual }: ExecutionPipelineProps) {
                 <span
                   className={cn(
                     "text-[10px] font-medium text-center max-w-[72px] leading-tight",
-                    done ? "text-green-600" : current ? "text-[#1A56DB]" : "text-neutral-400"
+                    done ? "text-green-600" : current ? "text-[#06B6D4]" : "text-neutral-400"
                   )}
                 >
                   {etapa.label}

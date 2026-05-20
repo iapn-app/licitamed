@@ -1,4 +1,4 @@
-import { NeonCard } from "@/components/shared/neon-card";
+﻿import { NeonCard } from "@/components/shared/neon-card";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import type { ItemPreco, EstrategiaPreco, RiscoPreco } from "@/types/preco";
@@ -71,7 +71,7 @@ export function SmartPriceTable({ itens }: SmartPriceTableProps) {
                     <span className="text-sm text-neutral-500 tabular-nums">{formatCurrency(item.preco_historico)}</span>
                   </td>
                   <td className="px-5 py-3 text-right">
-                    <span className="text-sm font-semibold text-[#1A56DB] tabular-nums">{formatCurrency(item.preco_sugerido)}</span>
+                    <span className="text-sm font-semibold text-[#06B6D4] tabular-nums">{formatCurrency(item.preco_sugerido)}</span>
                   </td>
                   <td className="px-5 py-3 text-right">
                     <span className={cn("text-sm font-semibold tabular-nums", item.margem >= 15 ? "text-green-600" : item.margem >= 8 ? "text-yellow-600" : "text-red-600")}>

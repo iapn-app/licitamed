@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -236,7 +236,7 @@ export default function LicitacoesClient({ initialData }: Props) {
                     </div>
                   </div>
 
-                  <ArrowRight className="w-4 h-4 text-neutral-300 group-hover:text-[#1A56DB] transition-colors flex-shrink-0 mt-1" />
+                  <ArrowRight className="w-4 h-4 text-neutral-300 group-hover:text-[#06B6D4] transition-colors flex-shrink-0 mt-1" />
                 </div>
               </div>
             </Link>
@@ -335,7 +335,7 @@ export default function LicitacoesClient({ initialData }: Props) {
                   Observações
                 </label>
                 <textarea
-                  className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:border-transparent resize-none"
+                  className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#06B6D4] focus:border-transparent resize-none"
                   rows={3}
                   placeholder="Informações adicionais..."
                   value={form.observacoes}

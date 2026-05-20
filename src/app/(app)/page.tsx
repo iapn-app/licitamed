@@ -1,4 +1,4 @@
-import {
+﻿import {
   TrendingUp,
   DollarSign,
   Clock,
@@ -46,8 +46,8 @@ export default async function DashboardPage() {
       value: String(licitacoesAtivas.length),
       description: "Em cotação, disputa ou proposta",
       icon: TrendingUp,
-      color: "text-[#1A56DB]",
-      bg: "bg-[#EBF0FD]",
+      color: "text-[#06B6D4]",
+      bg: "bg-[#ECFEFF]",
       trend: `${licitacoes.length} total`,
       trendUp: true,
     },
@@ -153,7 +153,7 @@ export default async function DashboardPage() {
           </div>
           <Link
             href="/licitacoes"
-            className="flex items-center gap-1 text-xs font-medium text-[#1A56DB] hover:text-[#1547BF] transition-colors"
+            className="flex items-center gap-1 text-xs font-medium text-[#06B6D4] hover:text-[#0891B2] transition-colors"
           >
             Ver todas
             <ArrowRight className="w-3.5 h-3.5" />
@@ -164,7 +164,7 @@ export default async function DashboardPage() {
           {licitacoes.length === 0 ? (
             <div className="p-12 text-center">
               <p className="text-sm text-neutral-400">Nenhuma licitação cadastrada</p>
-              <Link href="/licitacoes" className="text-xs text-[#1A56DB] hover:underline mt-2 block">
+              <Link href="/licitacoes" className="text-xs text-[#06B6D4] hover:underline mt-2 block">
                 Cadastrar primeira licitação →
               </Link>
             </div>
@@ -233,7 +233,7 @@ export default async function DashboardPage() {
                     <td className="px-5 py-4">
                       <Link
                         href={`/licitacoes/${lic.id}`}
-                        className="text-xs font-medium text-[#1A56DB] hover:text-[#1547BF] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
+                        className="text-xs font-medium text-[#06B6D4] hover:text-[#0891B2] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
                       >
                         Ver
                         <ArrowRight className="w-3 h-3" />
@@ -258,14 +258,14 @@ export default async function DashboardPage() {
               href="/licitacoes"
               className="flex items-center gap-3 p-2 rounded-md hover:bg-neutral-50 transition-colors group"
             >
-              <div className="w-7 h-7 rounded-md bg-[#EBF0FD] flex items-center justify-center">
-                <TrendingUp className="w-3.5 h-3.5 text-[#1A56DB]" />
+              <div className="w-7 h-7 rounded-md bg-[#ECFEFF] flex items-center justify-center">
+                <TrendingUp className="w-3.5 h-3.5 text-[#06B6D4]" />
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium text-neutral-700">Nova licitação</p>
                 <p className="text-xs text-neutral-400">Cadastrar processo</p>
               </div>
-              <ArrowRight className="w-3.5 h-3.5 text-neutral-300 group-hover:text-[#1A56DB] transition-colors" />
+              <ArrowRight className="w-3.5 h-3.5 text-neutral-300 group-hover:text-[#06B6D4] transition-colors" />
             </Link>
             <Link
               href="/fornecedores"
@@ -278,7 +278,7 @@ export default async function DashboardPage() {
                 <p className="text-sm font-medium text-neutral-700">Enviar cotações</p>
                 <p className="text-xs text-neutral-400">Para fornecedores</p>
               </div>
-              <ArrowRight className="w-3.5 h-3.5 text-neutral-300 group-hover:text-[#1A56DB] transition-colors" />
+              <ArrowRight className="w-3.5 h-3.5 text-neutral-300 group-hover:text-[#06B6D4] transition-colors" />
             </Link>
           </div>
         </NeonCard>

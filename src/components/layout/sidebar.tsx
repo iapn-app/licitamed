@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import type { ComponentType } from "react";
 import Link from "next/link";
@@ -59,7 +59,7 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 h-screen w-[240px] bg-white border-r border-neutral-200 flex flex-col z-30">
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 py-4 border-b border-neutral-100">
-        <div className="w-7 h-7 rounded-md bg-[#1A56DB] flex items-center justify-center flex-shrink-0">
+        <div className="w-7 h-7 rounded-md bg-[#06B6D4] flex items-center justify-center flex-shrink-0">
           <Activity className="w-4 h-4 text-white" strokeWidth={2.5} />
         </div>
         <div>
@@ -81,19 +81,19 @@ export function Sidebar() {
               <Link
                 href={href}
                 style={isActive
-                  ? { boxShadow: "0 4px 15px rgba(26, 86, 219, 0.5), 0 2px 6px rgba(26, 86, 219, 0.3)", transition: "box-shadow 0.3s ease" }
+                  ? { boxShadow: "0 4px 15px rgba(6, 182, 212, 0.5), 0 2px 6px rgba(6, 182, 212, 0.3)", transition: "box-shadow 0.3s ease" }
                   : { transition: "box-shadow 0.3s ease" }}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-100",
                   isActive
-                    ? "bg-[#EBF0FD] text-[#1A56DB]"
+                    ? "bg-[#ECFEFF] text-[#06B6D4]"
                     : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
                 )}
               >
                 <Icon
                   className={cn(
                     "w-4 h-4 flex-shrink-0",
-                    isActive ? "text-[#1A56DB]" : "text-neutral-400"
+                    isActive ? "text-[#06B6D4]" : "text-neutral-400"
                   )}
                 />
                 {label}
@@ -111,14 +111,14 @@ export function Sidebar() {
                         className={cn(
                           "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-100",
                           childActive
-                            ? "bg-[#EBF0FD] text-[#1A56DB]"
+                            ? "bg-[#ECFEFF] text-[#06B6D4]"
                             : "text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700"
                         )}
                       >
                         <ChildIcon
                           className={cn(
                             "w-3.5 h-3.5 flex-shrink-0",
-                            childActive ? "text-[#1A56DB]" : "text-neutral-400"
+                            childActive ? "text-[#06B6D4]" : "text-neutral-400"
                           )}
                         />
                         {cl}

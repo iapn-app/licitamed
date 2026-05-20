@@ -9,7 +9,7 @@
   --foreground: #0D0D0D;
   --card: #ffffff;
   --border: #E9ECEF;
-  --primary: #1A56DB;
+  --primary: #06B6D4;
   --success: #0E9F6E;
   --danger: #E02424;
   --warning: #D97706;
@@ -55,12 +55,12 @@ body {
 
 /* Neon bottom glow — no visible border, pure shadow */
 .neon-card {
-  box-shadow: 0 8px 25px rgba(26, 86, 219, 0.3), 0 4px 10px rgba(26, 86, 219, 0.15);
+  box-shadow: 0 8px 25px rgba(6, 182, 212, 0.3), 0 4px 10px rgba(6, 182, 212, 0.15);
   transition: all 0.25s ease;
 }
 
 .neon-card:hover {
-  box-shadow: 0 12px 40px rgba(26, 86, 219, 0.6), 0 6px 20px rgba(26, 86, 219, 0.4), 0 2px 8px rgba(26, 86, 219, 0.3);
+  box-shadow: 0 12px 40px rgba(6, 182, 212, 0.6), 0 6px 20px rgba(6, 182, 212, 0.4), 0 2px 8px rgba(6, 182, 212, 0.3);
   transform: translateY(-3px);
 }
 

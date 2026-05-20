@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Save, Building2, Percent, Mail, MessageSquare } from "lucide-react";
@@ -161,7 +161,7 @@ Obrigado! 🙏`
           ))}
         </p>
         <textarea
-          className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:border-transparent resize-none font-mono leading-relaxed"
+          className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#06B6D4] focus:border-transparent resize-none font-mono leading-relaxed"
           rows={12}
           value={templateEmail}
           onChange={(e) => setTemplateEmail(e.target.value)}
@@ -178,7 +178,7 @@ Obrigado! 🙏`
           Suporta *negrito*, _itálico_ e emojis. Mesmo conjunto de variáveis do e-mail.
         </p>
         <textarea
-          className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:border-transparent resize-none font-mono leading-relaxed"
+          className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#06B6D4] focus:border-transparent resize-none font-mono leading-relaxed"
           rows={10}
           value={templateWhatsApp}
           onChange={(e) => setTemplateWhatsApp(e.target.value)}

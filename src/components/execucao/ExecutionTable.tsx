@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, AlertTriangle, XCircle, ArrowRight } from "lucide-react";
+﻿import { CheckCircle2, Clock, AlertTriangle, XCircle, ArrowRight } from "lucide-react";
 import { NeonCard } from "@/components/shared/neon-card";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -107,7 +107,7 @@ export function ExecutionTable({ contratos, onClickContrato }: ExecutionTablePro
                     <p className="text-xs text-neutral-600 max-w-[160px] truncate">{c.proxima_acao}</p>
                   </td>
                   <td className="px-5 py-4">
-                    <ArrowRight className="w-3.5 h-3.5 text-neutral-300 group-hover:text-[#1A56DB] transition-colors" />
+                    <ArrowRight className="w-3.5 h-3.5 text-neutral-300 group-hover:text-[#06B6D4] transition-colors" />
                   </td>
                 </tr>
               );

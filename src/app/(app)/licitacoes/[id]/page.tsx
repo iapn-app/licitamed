@@ -363,7 +363,7 @@ export default function LicitacaoDetailPage({ params }: { params: { id: string }
                                     <span className="text-xs text-neutral-500">{cot.prazoEntrega}d</span>
                                   </td>
                                   <td className="px-5 py-2.5 text-right">
-                                    <span className="text-sm font-medium text-[#1A56DB] tabular-nums">
+                                    <span className="text-sm font-medium text-[#06B6D4] tabular-nums">
                                       {formatCurrency(precoFinal)}
                                     </span>
                                   </td>
@@ -440,7 +440,7 @@ export default function LicitacaoDetailPage({ params }: { params: { id: string }
                           <td className="px-4 py-3 text-right text-sm text-neutral-600 tabular-nums">
                             {formatCurrency(menorPreco)}
                           </td>
-                          <td className="px-4 py-3 text-right text-sm font-medium text-[#1A56DB] tabular-nums">
+                          <td className="px-4 py-3 text-right text-sm font-medium text-[#06B6D4] tabular-nums">
                             {formatCurrency(precoVenda)}
                           </td>
                           <td className="px-4 py-3 text-right text-xs text-green-600 font-medium">

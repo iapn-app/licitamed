@@ -1,4 +1,4 @@
-import { Upload, FileText, CheckCircle2, AlertTriangle } from "lucide-react";
+﻿import { Upload, FileText, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 
@@ -73,7 +73,7 @@ export default function DocumentosPage() {
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-right">
-                    <button className="text-xs text-[#1A56DB] hover:text-[#1547BF] transition-colors">
+                    <button className="text-xs text-[#06B6D4] hover:text-[#0891B2] transition-colors">
                       Substituir
                     </button>
                   </td>

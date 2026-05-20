@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
@@ -28,7 +28,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap px-4 pb-3 pt-2 text-sm font-medium text-neutral-500 ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border-b-2 border-transparent -mb-px hover:text-neutral-700 data-[state=active]:border-[#1A56DB] data-[state=active]:text-[#1A56DB]",
+      "inline-flex items-center justify-center whitespace-nowrap px-4 pb-3 pt-2 text-sm font-medium text-neutral-500 ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border-b-2 border-transparent -mb-px hover:text-neutral-700 data-[state=active]:border-[#06B6D4] data-[state=active]:text-[#06B6D4]",
       className
     )}
     {...props}

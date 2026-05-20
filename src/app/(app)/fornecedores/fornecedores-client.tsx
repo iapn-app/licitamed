@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -144,14 +144,14 @@ export default function FornecedoresClient({ initialData }: Props) {
       {/* Radar banner */}
       <Link
         href="/fornecedores/radar"
-        className="flex items-center justify-between gap-4 bg-gradient-to-r from-[#EBF0FD] to-blue-50 border border-[#1A56DB]/20 rounded-lg px-5 py-4 hover:border-[#1A56DB]/40 transition-colors group"
+        className="flex items-center justify-between gap-4 bg-gradient-to-r from-[#ECFEFF] to-blue-50 border border-[#06B6D4]/20 rounded-lg px-5 py-4 hover:border-[#06B6D4]/40 transition-colors group"
       >
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-md bg-[#1A56DB]/10 flex items-center justify-center flex-shrink-0">
-            <Radar className="w-4 h-4 text-[#1A56DB]" />
+          <div className="w-9 h-9 rounded-md bg-[#06B6D4]/10 flex items-center justify-center flex-shrink-0">
+            <Radar className="w-4 h-4 text-[#06B6D4]" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-[#1A56DB]">
+            <p className="text-sm font-semibold text-[#06B6D4]">
               Quer expandir sua base de fornecedores?
             </p>
             <p className="text-xs text-neutral-500 mt-0.5">
@@ -159,7 +159,7 @@ export default function FornecedoresClient({ initialData }: Props) {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1A56DB] whitespace-nowrap flex-shrink-0 group-hover:gap-2.5 transition-all">
+        <div className="flex items-center gap-1.5 text-xs font-semibold text-[#06B6D4] whitespace-nowrap flex-shrink-0 group-hover:gap-2.5 transition-all">
           Buscar no Radar
           <ArrowRight className="w-3.5 h-3.5" />
         </div>
@@ -181,7 +181,7 @@ export default function FornecedoresClient({ initialData }: Props) {
             onClick={() => setCategoriaFilter("todas")}
             className={`px-3 py-1.5 text-xs rounded-full border font-medium transition-colors ${
               categoriaFilter === "todas"
-                ? "bg-[#1A56DB] text-white border-[#1A56DB]"
+                ? "bg-[#06B6D4] text-white border-[#06B6D4]"
                 : "bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50"
             }`}
           >
@@ -193,7 +193,7 @@ export default function FornecedoresClient({ initialData }: Props) {
               onClick={() => setCategoriaFilter(cat === categoriaFilter ? "todas" : cat)}
               className={`px-3 py-1.5 text-xs rounded-full border font-medium transition-colors ${
                 categoriaFilter === cat
-                  ? "bg-[#1A56DB] text-white border-[#1A56DB]"
+                  ? "bg-[#06B6D4] text-white border-[#06B6D4]"
                   : "bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50"
               }`}
             >
@@ -288,7 +288,7 @@ export default function FornecedoresClient({ initialData }: Props) {
                 {forn.email && (
                   <div className="flex items-center gap-2 text-xs text-neutral-500">
                     <Mail className="w-3.5 h-3.5 text-neutral-300" />
-                    <a href={`mailto:${forn.email}`} className="hover:text-[#1A56DB] transition-colors truncate">
+                    <a href={`mailto:${forn.email}`} className="hover:text-[#06B6D4] transition-colors truncate">
                       {forn.email}
                     </a>
                   </div>
@@ -304,7 +304,7 @@ export default function FornecedoresClient({ initialData }: Props) {
               <div className="mt-3 pt-3 border-t border-neutral-100 flex items-center justify-end">
                 <button
                   onClick={() => toast.success(`Link de cotação copiado para ${forn.nome}`)}
-                  className="text-xs font-medium text-[#1A56DB] hover:text-[#1547BF] transition-colors"
+                  className="text-xs font-medium text-[#06B6D4] hover:text-[#0891B2] transition-colors"
                 >
                   Enviar cotação →
                 </button>
@@ -395,7 +395,7 @@ export default function FornecedoresClient({ initialData }: Props) {
                     onClick={() => toggleCategoria(cat)}
                     className={`px-3 py-1.5 text-xs rounded-full border font-medium transition-colors ${
                       newFornecedor.categorias.includes(cat)
-                        ? "bg-[#1A56DB] text-white border-[#1A56DB]"
+                        ? "bg-[#06B6D4] text-white border-[#06B6D4]"
                         : "bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50"
                     }`}
                   >
@@ -410,7 +410,7 @@ export default function FornecedoresClient({ initialData }: Props) {
                 Observações
               </label>
               <textarea
-                className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#1A56DB] focus:border-transparent resize-none"
+                className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#06B6D4] focus:border-transparent resize-none"
                 rows={3}
                 placeholder="Notas sobre o fornecedor, condições especiais..."
                 value={newFornecedor.observacoes}

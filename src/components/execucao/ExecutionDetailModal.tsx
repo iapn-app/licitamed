@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { X, CheckCircle2, Clock, FileText, Package, DollarSign } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -151,9 +151,9 @@ export function ExecutionDetailModal({ contrato, onClose }: ExecutionDetailModal
           )}
 
           {/* Próxima ação */}
-          <div className="flex items-center justify-between p-4 rounded-lg bg-[#EBF0FD] border border-[#C3D4FA]">
+          <div className="flex items-center justify-between p-4 rounded-lg bg-[#ECFEFF] border border-[#A5F3FC]">
             <div>
-              <p className="text-xs font-medium text-[#1A56DB] uppercase tracking-wide">Próxima ação</p>
+              <p className="text-xs font-medium text-[#06B6D4] uppercase tracking-wide">Próxima ação</p>
               <p className="text-sm font-semibold text-neutral-800 mt-0.5">{contrato.proxima_acao}</p>
             </div>
           </div>

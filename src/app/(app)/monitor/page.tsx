@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import {
@@ -353,7 +353,7 @@ export default function MonitorPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
-            <Radio className="w-5 h-5 text-[#1A56DB]" />
+            <Radio className="w-5 h-5 text-[#06B6D4]" />
             <h1 className="text-xl font-semibold text-neutral-900">Monitor de Licitações</h1>
           </div>
           <p className="text-sm text-neutral-500">
@@ -433,7 +433,7 @@ export default function MonitorPage() {
               onClick={() => setMonitorActive((v) => !v)}
               className={cn(
                 "relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none",
-                monitorActive ? "bg-[#1A56DB]" : "bg-neutral-200"
+                monitorActive ? "bg-[#06B6D4]" : "bg-neutral-200"
               )}
             >
               <span
@@ -454,7 +454,7 @@ export default function MonitorPage() {
               <span className="text-neutral-400 font-normal">(Enter ou vírgula para adicionar)</span>
             </label>
             <div
-              className="flex flex-wrap gap-1.5 min-h-[2.25rem] w-full rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-[#1A56DB] focus-within:border-transparent cursor-text"
+              className="flex flex-wrap gap-1.5 min-h-[2.25rem] w-full rounded-md border border-neutral-200 bg-white px-2.5 py-1.5 focus-within:ring-2 focus-within:ring-[#06B6D4] focus-within:border-transparent cursor-text"
               onClick={() => kwInputRef.current?.focus()}
             >
               {keywords.map((kw) => (
@@ -491,7 +491,7 @@ export default function MonitorPage() {
               <button
                 type="button"
                 onClick={() => setSelectedUFs((p) => (p.length === UFS.length ? [] : [...UFS]))}
-                className="text-xs text-[#1A56DB] hover:text-[#1547BF] font-medium"
+                className="text-xs text-[#06B6D4] hover:text-[#0891B2] font-medium"
               >
                 {selectedUFs.length === UFS.length ? "Desmarcar todos" : "Selecionar todos"}
               </button>
@@ -503,7 +503,7 @@ export default function MonitorPage() {
                     type="checkbox"
                     checked={selectedUFs.includes(uf)}
                     onChange={() => toggleUF(uf)}
-                    className="w-3.5 h-3.5 rounded border-neutral-300 accent-[#1A56DB] cursor-pointer"
+                    className="w-3.5 h-3.5 rounded border-neutral-300 accent-[#06B6D4] cursor-pointer"
                   />
                   <span className="text-xs text-neutral-600 group-hover:text-neutral-900 select-none">
                     {uf}
@@ -739,11 +739,11 @@ export default function MonitorPage() {
             ] as const
           ).map(({ step, icon: Icon, title, desc }) => (
             <div key={step} className="flex flex-col items-center text-center gap-3 relative">
-              <div className="w-11 h-11 rounded-full bg-[#EBF0FD] flex items-center justify-center flex-shrink-0 z-10">
-                <Icon className="w-5 h-5 text-[#1A56DB]" />
+              <div className="w-11 h-11 rounded-full bg-[#ECFEFF] flex items-center justify-center flex-shrink-0 z-10">
+                <Icon className="w-5 h-5 text-[#06B6D4]" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-[#1A56DB] uppercase tracking-widest mb-1">
+                <p className="text-[10px] font-bold text-[#06B6D4] uppercase tracking-widest mb-1">
                   Passo {step}
                 </p>
                 <p className="text-sm font-semibold text-neutral-900 mb-1">{title}</p>

@@ -121,7 +121,7 @@ export default function CotacaoPortalPage({ params }: { params: { token: string 
       <header className="bg-white border-b border-neutral-200 sticky top-0 z-20">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-[#1A56DB] flex items-center justify-center">
+            <div className="w-7 h-7 rounded-md bg-[#06B6D4] flex items-center justify-center">
               <Activity className="w-4 h-4 text-white" strokeWidth={2.5} />
             </div>
             <span className="text-sm font-semibold text-neutral-900">LicitaMed</span>
@@ -141,7 +141,7 @@ export default function CotacaoPortalPage({ params }: { params: { token: string 
           <div className="bg-white rounded-lg border border-neutral-200 shadow-card p-5">
             <div className="flex items-start gap-3">
               <div className="flex-1">
-                <p className="text-xs font-medium text-[#1A56DB] uppercase tracking-wide mb-1">
+                <p className="text-xs font-medium text-[#06B6D4] uppercase tracking-wide mb-1">
                   Solicitação de Cotação
                 </p>
                 <h1 className="text-base font-semibold text-neutral-900">
@@ -297,7 +297,7 @@ export default function CotacaoPortalPage({ params }: { params: { token: string 
             </div>
             <div className="w-full h-1.5 bg-neutral-100 rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#1A56DB] rounded-full transition-all duration-300"
+                className="h-full bg-[#06B6D4] rounded-full transition-all duration-300"
                 style={{ width: `${(preenchidos / itensFornecedor.length) * 100}%` }}
               />
             </div>

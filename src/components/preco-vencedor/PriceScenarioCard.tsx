@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+﻿import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/utils";
 import { TrendingUp, Target, Shield, CheckCircle2 } from "lucide-react";
 import type { CenarioPreco, EstrategiaPreco } from "@/types/preco";
@@ -23,8 +23,8 @@ const cenarioConfig: Record<EstrategiaPreco, {
     label: "Agressivo",
     icon: TrendingUp,
     activeBg: "bg-blue-50",
-    activeBorder: "border-[#1A56DB]",
-    activeText: "text-[#1A56DB]",
+    activeBorder: "border-[#06B6D4]",
+    activeText: "text-[#06B6D4]",
     badgeBg: "bg-blue-100",
     badgeText: "text-blue-700",
     idleBorder: "border-neutral-200",
@@ -92,7 +92,7 @@ export function PriceScenarioCard({ cenario, selected, onSelect }: PriceScenario
         </div>
         <div className="h-1.5 bg-neutral-100 rounded-full overflow-hidden">
           <div
-            className={cn("h-full rounded-full", selected ? (cenario.tipo === "agressivo" ? "bg-[#1A56DB]" : cenario.tipo === "equilibrado" ? "bg-green-500" : "bg-yellow-500") : "bg-neutral-300")}
+            className={cn("h-full rounded-full", selected ? (cenario.tipo === "agressivo" ? "bg-[#06B6D4]" : cenario.tipo === "equilibrado" ? "bg-green-500" : "bg-yellow-500") : "bg-neutral-300")}
             style={{ width: `${cenario.chance_ganhar}%` }}
           />
         </div>
