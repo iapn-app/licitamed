@@ -1,24 +1,12 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-// Cria cliente com service role key para bypassar RLS no DELETE
-function adminClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) return null;
-  return createClient(url, serviceKey, { auth: { persistSession: false } });
-}
+import { adminSupabase } from "@/lib/supabase";
 
 export async function DELETE() {
-  const admin = adminClient();
+  const admin = adminSupabase();
 
   if (!admin) {
     return NextResponse.json(
-      {
-        ok: false,
-        error:
-          "SUPABASE_SERVICE_ROLE_KEY não configurada. Adicione ao .env.local e às variáveis de ambiente do Vercel.",
-      },
+      { ok: false, error: "SUPABASE_SERVICE_ROLE_KEY não configurada." },
       { status: 500 }
     );
   }
@@ -45,7 +33,7 @@ export async function DELETE() {
 
 export async function POST() {
   return NextResponse.json(
-    { error: "Seed de dados desativado. Use DELETE para limpar o banco." },
+    { error: "Seed desativado. Use DELETE para limpar o banco." },
     { status: 405 }
   );
 }
