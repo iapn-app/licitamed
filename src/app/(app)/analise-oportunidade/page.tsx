@@ -25,14 +25,14 @@ export default function AnaliseOportunidadePage() {
           Nenhuma licitação para analisar
         </h2>
         <p className="text-sm text-neutral-400 max-w-sm mb-6">
-          Importe uma licitação para começar a análise de oportunidade. O sistema calculará o score, critérios e alertas automaticamente.
+          Cadastre uma licitação primeiro para ver a análise de oportunidade com score, critérios e alertas inteligentes.
         </p>
         <Link
           href="/licitacoes"
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#06B6D4] hover:bg-[#0891B2] rounded-md transition-colors"
         >
           <TrendingUp className="w-4 h-4" />
-          Ir para Licitações
+          Cadastrar Licitação
         </Link>
       </NeonCard>
     </div>

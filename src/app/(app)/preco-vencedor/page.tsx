@@ -25,14 +25,14 @@ export default function PrecoVencedorPage() {
           Nenhuma simulação disponível
         </h2>
         <p className="text-sm text-neutral-400 max-w-sm mb-6">
-          Importe uma licitação para começar a análise de preços. O sistema sugerirá o melhor preço por item com base em cotações e histórico.
+          Cadastre uma licitação e receba cotações para usar o simulador de preço com IA.
         </p>
         <Link
           href="/licitacoes"
           className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#06B6D4] hover:bg-[#0891B2] rounded-md transition-colors"
         >
           <Sparkles className="w-4 h-4" />
-          Ir para Licitações
+          Cadastrar Licitação
         </Link>
       </NeonCard>
     </div>

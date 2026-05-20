@@ -2,7 +2,6 @@
 
 import { ClipboardCheck, FolderOpen } from "lucide-react";
 import { NeonCard } from "@/components/shared/neon-card";
-import Link from "next/link";
 
 export default function ExecucaoPage() {
   return (
@@ -24,16 +23,9 @@ export default function ExecucaoPage() {
         <h2 className="text-base font-semibold text-neutral-800 mb-1">
           Nenhum contrato em execução
         </h2>
-        <p className="text-sm text-neutral-400 max-w-sm mb-6">
-          Importe uma licitação para começar a análise. Quando a POWER MED vencer um pregão, o contrato aparecerá aqui para acompanhamento do empenho ao pagamento.
+        <p className="text-sm text-neutral-400 max-w-sm">
+          Contratos aparecem aqui após vencer uma licitação. Acompanhe o status do empenho até o pagamento em um só lugar.
         </p>
-        <Link
-          href="/licitacoes"
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-[#06B6D4] hover:bg-[#0891B2] rounded-md transition-colors"
-        >
-          <ClipboardCheck className="w-4 h-4" />
-          Ir para Licitações
-        </Link>
       </NeonCard>
     </div>
   );

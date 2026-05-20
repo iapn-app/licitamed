@@ -1,8 +1,8 @@
-﻿"use client";
+"use client";
 
 import type { ComponentType } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
@@ -16,6 +16,7 @@ import {
   TrendingUp,
   Sparkles,
   ClipboardCheck,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +55,14 @@ const navItems: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  function handleLogout() {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("licitamed_user");
+    }
+    router.push("/login");
+  }
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-[240px] bg-white border-r border-neutral-200 flex flex-col z-30">
@@ -132,10 +141,25 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="px-5 py-4 border-t border-neutral-100">
-        <p className="text-xs font-medium text-neutral-700 truncate">POWER MED</p>
-        <p className="text-[10px] text-neutral-400 mt-0.5">v1.0.0 — Beta</p>
+      {/* User + Logout */}
+      <div className="px-4 py-4 border-t border-neutral-100">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 rounded-full bg-[#06B6D4] flex items-center justify-center flex-shrink-0">
+            <span className="text-xs font-bold text-white">RC</span>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold text-neutral-800 truncate">Rafael Carvalho</p>
+            <p className="text-[10px] text-neutral-400 truncate">Gestor Comercial</p>
+          </div>
+          <button
+            onClick={handleLogout}
+            title="Sair"
+            className="p-1.5 rounded-md text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors flex-shrink-0"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
+        </div>
+        <p className="text-[10px] text-neutral-300">v1.0.0 — Beta</p>
       </div>
     </aside>
   );

@@ -159,15 +159,17 @@ export default function LicitacoesClient({ initialData }: Props) {
 
       {/* Empty state */}
       {initialData.length === 0 ? (
-        <div className="bg-white rounded-lg border border-neutral-200 p-16 text-center">
-          <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center mx-auto mb-4">
-            <FileText className="w-6 h-6 text-neutral-400" />
+        <div className="neon-card bg-white rounded-lg border border-neutral-200 flex flex-col items-center justify-center py-20 text-center">
+          <div className="w-14 h-14 rounded-full bg-[#ECFEFF] flex items-center justify-center mb-4">
+            <FileText className="w-7 h-7 text-[#06B6D4]" />
           </div>
-          <p className="text-sm font-medium text-neutral-700">Nenhuma licitação cadastrada</p>
-          <p className="text-xs text-neutral-400 mt-1 mb-5">Comece cadastrando seu primeiro processo licitatório</p>
+          <p className="text-base font-semibold text-neutral-800 mb-1">Nenhuma licitação cadastrada</p>
+          <p className="text-sm text-neutral-400 mt-1 mb-6 max-w-sm">
+            Cadastre sua primeira licitação ou importe um edital do Monitor
+          </p>
           <Button onClick={() => setShowModal(true)} className="gap-2">
             <Plus className="w-4 h-4" />
-            Cadastrar primeira licitação
+            Nova Licitação
           </Button>
         </div>
       ) : (

@@ -95,9 +95,19 @@ export async function POST() {
   return NextResponse.json({ ok: true, results });
 }
 
+export async function DELETE() {
+  const tables = ["cotacao_itens", "cotacoes", "itens_licitacao", "licitacoes", "fornecedores"];
+  const results: Record<string, unknown> = {};
+  for (const table of tables) {
+    const { error, count } = await supabase.from(table).delete({ count: "exact" }).not("id", "is", null);
+    results[table] = error ? { error: error.message } : { deleted: count };
+  }
+  return NextResponse.json({ ok: true, results });
+}
+
 export async function GET() {
   return NextResponse.json(
-    { error: "Use POST para executar o seed" },
+    { error: "Use POST para seed, DELETE para limpar" },
     { status: 405 }
   );
 }
