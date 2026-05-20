@@ -143,53 +143,7 @@ const MOCK_EDITAIS: EditalPNCP[] = [
   },
 ];
 
-const HISTORICO: HistoricoEdital[] = [
-  {
-    id: "h1",
-    dataHora: new Date(Date.now() - 90 * 60000).toISOString(),
-    orgao: "Prefeitura de Campinas",
-    uf: "SP",
-    objeto: "Material de curativo",
-    valor: 890000,
-    status: "importado",
-  },
-  {
-    id: "h2",
-    dataHora: new Date(Date.now() - 4 * 3600000).toISOString(),
-    orgao: "Secretaria de Saúde MG",
-    uf: "MG",
-    objeto: "Luvas e descartáveis",
-    valor: 2340000,
-    status: "visualizado",
-  },
-  {
-    id: "h3",
-    dataHora: new Date(Date.now() - 6 * 3600000).toISOString(),
-    orgao: "Hospital Federal RJ",
-    uf: "RJ",
-    objeto: "Equipamentos hospitalares",
-    valor: 5100000,
-    status: "importado",
-  },
-  {
-    id: "h4",
-    dataHora: new Date(Date.now() - 8 * 3600000).toISOString(),
-    orgao: "Prefeitura de Salvador",
-    uf: "BA",
-    objeto: "Medicamentos",
-    valor: 1200000,
-    status: "ignorado",
-  },
-  {
-    id: "h5",
-    dataHora: new Date(Date.now() - 10 * 3600000).toISOString(),
-    orgao: "Ministério da Saúde",
-    uf: "DF",
-    objeto: "Insumos laboratoriais",
-    valor: 7800000,
-    status: "visualizado",
-  },
-];
+const HISTORICO: HistoricoEdital[] = [];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -758,50 +712,64 @@ export default function MonitorPage() {
       <div>
         <h2 className="text-sm font-semibold text-neutral-900 mb-4">Histórico de alertas</h2>
         <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-neutral-100 bg-neutral-50">
-                <th className="text-left text-xs font-medium text-neutral-500 px-4 py-3">Data/hora</th>
-                <th className="text-left text-xs font-medium text-neutral-500 px-4 py-3">Órgão</th>
-                <th className="text-left text-xs font-medium text-neutral-500 px-4 py-3 hidden md:table-cell">UF</th>
-                <th className="text-left text-xs font-medium text-neutral-500 px-4 py-3 hidden lg:table-cell">Valor estimado</th>
-                <th className="text-left text-xs font-medium text-neutral-500 px-4 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {HISTORICO.map((h, i) => (
-                <tr
-                  key={h.id}
-                  className={cn(
-                    "hover:bg-neutral-50 transition-colors",
-                    i < HISTORICO.length - 1 && "border-b border-neutral-50"
-                  )}
-                >
-                  <td className="px-4 py-3 text-xs text-neutral-500 whitespace-nowrap">
-                    {formatDT(h.dataHora)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <p className="text-xs font-medium text-neutral-900">{h.orgao}</p>
-                    <p className="text-[10px] text-neutral-400">{h.objeto}</p>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-neutral-500 hidden md:table-cell">{h.uf}</td>
-                  <td className="px-4 py-3 text-xs font-medium text-neutral-900 hidden lg:table-cell whitespace-nowrap">
-                    {formatBRL(h.valor)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={cn(
-                        "inline-block text-[10px] font-medium px-2 py-0.5 rounded-full border whitespace-nowrap",
-                        STATUS_STYLE[h.status]
-                      )}
-                    >
-                      {STATUS_LABEL[h.status]}
-                    </span>
-                  </td>
+          {HISTORICO.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center px-6">
+              <div className="w-12 h-12 rounded-full bg-[#ECFEFF] flex items-center justify-center mb-4">
+                <Bell className="w-6 h-6 text-[#06B6D4]" />
+              </div>
+              <p className="text-sm font-semibold text-neutral-800 mb-1">
+                Nenhum alerta registrado ainda
+              </p>
+              <p className="text-xs text-neutral-400 max-w-xs">
+                Os editais detectados pelo Monitor aparecerão aqui automaticamente.
+              </p>
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-neutral-100 bg-neutral-50">
+                  <th className="text-left text-xs font-medium text-neutral-500 px-4 py-3">Data/hora</th>
+                  <th className="text-left text-xs font-medium text-neutral-500 px-4 py-3">Órgão</th>
+                  <th className="text-left text-xs font-medium text-neutral-500 px-4 py-3 hidden md:table-cell">UF</th>
+                  <th className="text-left text-xs font-medium text-neutral-500 px-4 py-3 hidden lg:table-cell">Valor estimado</th>
+                  <th className="text-left text-xs font-medium text-neutral-500 px-4 py-3">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {HISTORICO.map((h, i) => (
+                  <tr
+                    key={h.id}
+                    className={cn(
+                      "hover:bg-neutral-50 transition-colors",
+                      i < HISTORICO.length - 1 && "border-b border-neutral-50"
+                    )}
+                  >
+                    <td className="px-4 py-3 text-xs text-neutral-500 whitespace-nowrap">
+                      {formatDT(h.dataHora)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-xs font-medium text-neutral-900">{h.orgao}</p>
+                      <p className="text-[10px] text-neutral-400">{h.objeto}</p>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-neutral-500 hidden md:table-cell">{h.uf}</td>
+                    <td className="px-4 py-3 text-xs font-medium text-neutral-900 hidden lg:table-cell whitespace-nowrap">
+                      {formatBRL(h.valor)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={cn(
+                          "inline-block text-[10px] font-medium px-2 py-0.5 rounded-full border whitespace-nowrap",
+                          STATUS_STYLE[h.status]
+                        )}
+                      >
+                        {STATUS_LABEL[h.status]}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>
