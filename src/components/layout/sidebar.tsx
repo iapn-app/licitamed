@@ -17,6 +17,7 @@ import {
   Sparkles,
   ClipboardCheck,
   BarChart3,
+  Crosshair,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -47,6 +48,7 @@ const navItems: NavItem[] = [
   },
   { href: "/cotacoes", label: "Cotações", icon: ClipboardList },
   { href: "/analise-oportunidade", label: "Análise", icon: TrendingUp },
+  { href: "/concorrentes", label: "Concorrentes", icon: Crosshair },
   { href: "/preco-vencedor", label: "Preço IA", icon: Sparkles },
   { href: "/execucao", label: "Execução", icon: ClipboardCheck },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
