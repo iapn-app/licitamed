@@ -18,6 +18,7 @@ import {
   ClipboardCheck,
   BarChart3,
   Crosshair,
+  Upload,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -55,6 +56,7 @@ const navItems: NavItem[] = [
   { href: "/monitor", label: "Monitor", icon: Radio },
   { href: "/documentos", label: "Documentos", icon: FolderOpen },
   { href: "/configuracoes", label: "Configurações", icon: Settings },
+  { href: "/importar", label: "Importar Dados", icon: Upload },
 ];
 
 export function Sidebar() {
