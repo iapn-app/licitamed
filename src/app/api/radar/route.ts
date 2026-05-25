@@ -81,22 +81,66 @@ const MOCK_FALLBACK: FornecedorNorm[] = [
   },
 ];
 
+const ALL_CNAES = ["4645101", "4664800", "4644301", "4645102", "4684201"];
+
+async function fetchByCnae(cnae: string, uf: string): Promise<FornecedorNorm[]> {
+  const apiUrl = new URL(
+    "https://dadosabertos.compras.gov.br/modulo-fornecedor/1_consultarFornecedor"
+  );
+  apiUrl.searchParams.set("codigoCnae", cnae);
+  apiUrl.searchParams.set("ativo", "true");
+  apiUrl.searchParams.set("pagina", "1");
+  apiUrl.searchParams.set("tamanhoPagina", "500");
+
+  const response = await fetch(apiUrl.toString(), {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(15000),
+  });
+
+  if (!response.ok) return [];
+
+  const raw = await response.json() as { resultado?: RawFornecedor[] };
+  return (raw?.resultado ?? []).map(normalize).filter((f) => f.ativo && f.uf === uf);
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const cnae = searchParams.get("cnae");
   const uf = searchParams.get("uf");
 
-  if (!cnae || !uf) {
+  if (!uf) {
     return NextResponse.json(
-      { error: "Parâmetros obrigatórios: cnae e uf" },
+      { error: "Parâmetro obrigatório: uf" },
       { status: 400 }
     );
   }
 
   try {
-    // Correct endpoint discovered via OpenAPI spec at dadosabertos.compras.gov.br/v3/api-docs
-    // The API does not support UF filtering — we fetch all active suppliers for the CNAE
-    // and filter by ufSigla server-side.
+    // "Todas as categorias": fetch all unique CNAEs in parallel and deduplicate
+    if (!cnae || cnae === "all") {
+      const results = await Promise.allSettled(
+        ALL_CNAES.map((c) => fetchByCnae(c, uf))
+      );
+      const allFailed = results.every((r) => r.status === "rejected");
+      if (allFailed) {
+        return NextResponse.json({ fornecedores: MOCK_FALLBACK, useMock: true });
+      }
+      const seen = new Set<string>();
+      const filtered: FornecedorNorm[] = [];
+      for (const r of results) {
+        if (r.status === "fulfilled") {
+          for (const f of r.value) {
+            if (!seen.has(f.cnpj)) {
+              seen.add(f.cnpj);
+              filtered.push(f);
+            }
+          }
+        }
+      }
+      return NextResponse.json({ fornecedores: filtered });
+    }
+
+    // Categoria específica: comportamento original
     const apiUrl = new URL(
       "https://dadosabertos.compras.gov.br/modulo-fornecedor/1_consultarFornecedor"
     );
@@ -116,8 +160,6 @@ export async function GET(request: NextRequest) {
 
     const raw = await response.json() as { resultado?: RawFornecedor[] };
     const all: FornecedorNorm[] = (raw?.resultado ?? []).map(normalize);
-
-    // Filter by UF (server-side since the API doesn't support it)
     const filtered = all.filter((f) => f.ativo && f.uf === uf);
 
     return NextResponse.json({ fornecedores: filtered });

@@ -36,6 +36,7 @@ import { toast } from "sonner";
 const PAGE_SIZE = 50;
 
 const CATEGORIAS = [
+  { id: "todas", label: "Todas as categorias", cnae: "all" },
   { id: "mat-medicos", label: "Materiais médicos e hospitalares", cnae: "4645101" },
   { id: "equip-med", label: "Equipamentos médico-hospitalares", cnae: "4664800" },
   { id: "medicamentos", label: "Medicamentos e drogas", cnae: "4644301" },
@@ -166,7 +167,7 @@ function SupplierCardSkeleton() {
 }
 
 export default function RadarPage() {
-  const [categoriaId, setCategoriaId] = useState("");
+  const [categoriaId, setCategoriaId] = useState("todas");
   const [uf, setUf] = useState("");
   const [nameSearch, setNameSearch] = useState("");
   const [searchState, setSearchState] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -181,11 +182,10 @@ export default function RadarPage() {
   const [cnpjError, setCnpjError] = useState(false);
 
   const handleSearch = async () => {
-    if (!categoriaId) { toast.error("Selecione uma categoria"); return; }
     if (!uf) { toast.error("Selecione um estado"); return; }
 
-    const categoria = CATEGORIAS.find((c) => c.id === categoriaId);
-    if (!categoria) return;
+    const categoria = CATEGORIAS.find((c) => c.id === categoriaId) ?? CATEGORIAS[0];
+
 
     setSearchState("loading");
     setResults([]);
