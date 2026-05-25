@@ -16,6 +16,7 @@ import {
   TrendingUp,
   Sparkles,
   ClipboardCheck,
+  BarChart3,
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,7 @@ const navItems: NavItem[] = [
   { href: "/analise-oportunidade", label: "Análise", icon: TrendingUp },
   { href: "/preco-vencedor", label: "Preço IA", icon: Sparkles },
   { href: "/execucao", label: "Execução", icon: ClipboardCheck },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/monitor", label: "Monitor", icon: Radio },
   { href: "/documentos", label: "Documentos", icon: FolderOpen },
   { href: "/configuracoes", label: "Configurações", icon: Settings },
