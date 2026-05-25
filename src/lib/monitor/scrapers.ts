@@ -2,10 +2,7 @@ import { temPalavraChave, encontrarPalavras } from './keywords';
 import type { LicitacaoMonitor, StatusFonte } from './types';
 
 function today(): string { return new Date().toISOString().slice(0, 10); }
-function daysAgo(n: number): string {
-  const d = new Date(); d.setDate(d.getDate() - n);
-  return d.toISOString().slice(0, 10);
-}
+function toDateStr(d: Date): string { return d.toISOString().slice(0, 10).replace(/-/g, ''); }
 
 async function safeFetch(url: string, opts?: RequestInit): Promise<Response | null> {
   try {
@@ -13,17 +10,22 @@ async function safeFetch(url: string, opts?: RequestInit): Promise<Response | nu
   } catch { return null; }
 }
 
-// ─── ComprasRio ───────────────────────────────────────────────────────────────
+// ─── ComprasRio → BLL API (saúde, RJ) ────────────────────────────────────────
 
 export async function scrapeComprasRio(): Promise<{ dados: LicitacaoMonitor[]; status: StatusFonte }> {
   const statusBase: StatusFonte = { fonte: 'ComprasRio', ativa: false, ultimaVerificacao: new Date().toISOString() };
   try {
-    const url = `https://compras.rio.rj.gov.br/api/licitacoes?dtPublicacaoInicial=${daysAgo(30)}&dtPublicacaoFinal=${today()}&page=1&size=50`;
+    const url = `https://bll.org.br/api/v2/licitacoes?uf=RJ&categoria=saude&status=aberta&pagina=1&itensPorPagina=50`;
+    console.log('ComprasRio (via BLL): buscando...', url);
     const res = await safeFetch(url, { headers: { Accept: 'application/json' } });
-    if (!res?.ok) return { dados: [], status: { ...statusBase, erro: `HTTP ${res?.status ?? 'timeout'}` } };
+    if (!res?.ok) {
+      console.log(`ComprasRio: HTTP ${res?.status ?? 'timeout'}`);
+      return { dados: [], status: { ...statusBase, erro: `HTTP ${res?.status ?? 'timeout'}` } };
+    }
 
-    const json = await res.json() as { content?: unknown[]; data?: unknown[] };
-    const items = (json.content ?? json.data ?? []) as Record<string, unknown>[];
+    const json = await res.json() as { items?: unknown[]; data?: unknown[]; licitacoes?: unknown[] };
+    const items = (json.items ?? json.data ?? json.licitacoes ?? []) as Record<string, unknown>[];
+    console.log(`ComprasRio: ${items.length} itens brutos`);
 
     const dados: LicitacaoMonitor[] = [];
     for (const item of items) {
@@ -32,85 +34,118 @@ export async function scrapeComprasRio(): Promise<{ dados: LicitacaoMonitor[]; s
       dados.push({
         id: `comprasrio-${item.id ?? item.idLicitacao ?? Math.random().toString(36).slice(2)}`,
         fonte: 'ComprasRio',
-        orgao: String(item.orgao ?? item.nomeOrgao ?? item.unidade ?? 'Prefeitura do Rio'),
+        orgao: String(item.orgao ?? item.nomeOrgao ?? item.municipio ?? 'Município RJ'),
         objeto,
         modalidade: String(item.modalidade ?? item.tipoLicitacao ?? 'Não informada'),
         valorEstimado: Number(item.valorEstimado ?? item.valor ?? 0) || null,
         dataPublicacao: String(item.dataPublicacao ?? item.dtPublicacao ?? today()).slice(0, 10),
         dataAbertura: item.dataAbertura ? String(item.dataAbertura).slice(0, 10) : null,
         status: 'ativa',
-        urlEdital: item.urlEdital ? String(item.urlEdital) : null,
-        municipio: 'Rio de Janeiro',
+        urlEdital: item.urlEdital ?? item.url ? String(item.urlEdital ?? item.url) : null,
+        municipio: String(item.municipio ?? 'Rio de Janeiro'),
         uf: 'RJ',
         palavrasEncontradas: encontrarPalavras(objeto),
       });
     }
 
+    console.log(`ComprasRio: ${dados.length} itens após filtro`);
     return { dados, status: { ...statusBase, ativa: true, totalEncontrado: dados.length } };
   } catch (e) {
+    console.log('ComprasRio: erro', String(e));
     return { dados: [], status: { ...statusBase, erro: String(e) } };
   }
 }
 
-// ─── SEPLAG-RJ ────────────────────────────────────────────────────────────────
+// ─── SEPLAG-RJ → PNCP filtrado por CNPJ da SES-RJ ───────────────────────────
+
+const SES_RJ_CNPJ = '44267353000163';
 
 export async function scrapeSeplagRJ(): Promise<{ dados: LicitacaoMonitor[]; status: StatusFonte }> {
   const statusBase: StatusFonte = { fonte: 'SEPLAG-RJ', ativa: false, ultimaVerificacao: new Date().toISOString() };
   try {
-    const url = `https://www.licitacoes.rj.gov.br/servlet/hwrpb027?P_TIPO=ALL&P_STATUS=ABE&P_DATAINICIO=${daysAgo(30)}&P_DATAFIM=${today()}`;
+    const inicio = new Date(); inicio.setDate(inicio.getDate() - 60);
+    const dataInicial = toDateStr(inicio);
+    const dataFinal = toDateStr(new Date());
+
+    const params = new URLSearchParams({
+      dataInicial, dataFinal,
+      cnpjOrgao: SES_RJ_CNPJ,
+      pagina: '1',
+      tamanhoPagina: '50',
+    });
+
+    const url = `https://pncp.gov.br/api/pncp/v1/contratacoes/publicacoes?${params}`;
+    console.log('SEPLAG-RJ (via PNCP SES-RJ): buscando...', url);
+
     const res = await safeFetch(url, { headers: { Accept: 'application/json' } });
-    if (!res?.ok) return { dados: [], status: { ...statusBase, erro: `HTTP ${res?.status ?? 'timeout'}` } };
+    if (!res?.ok) {
+      console.log(`SEPLAG-RJ: HTTP ${res?.status ?? 'timeout'}`);
+      return { dados: [], status: { ...statusBase, erro: `HTTP ${res?.status ?? 'timeout'}` } };
+    }
 
-    const json = await res.json() as { licitacoes?: unknown[] };
-    const items = (json.licitacoes ?? []) as Record<string, unknown>[];
+    const json = await res.json() as { data?: Record<string, unknown>[]; totalPaginas?: number };
+    const items = json.data ?? [];
+    console.log(`SEPLAG-RJ: ${items.length} itens brutos`);
+
     const dados: LicitacaoMonitor[] = [];
-
     for (const item of items) {
-      const objeto = String(item.objeto ?? item.OBJETO ?? '');
+      const objeto = String(item.objetoCompra ?? item.objeto ?? '');
       if (!temPalavraChave(objeto)) continue;
       dados.push({
-        id: `seplag-${item.numeroLicitacao ?? item.NUMERO ?? Math.random().toString(36).slice(2)}`,
+        id: `seplag-${item.numeroControlePNCP ?? Math.random().toString(36).slice(2)}`,
         fonte: 'SEPLAG-RJ',
-        orgao: String(item.orgao ?? item.ORGAO ?? 'Governo do Estado RJ'),
+        orgao: String(
+          (item.unidadeOrgao as Record<string, unknown>)?.nomeUnidade ??
+          (item.orgaoEntidade as Record<string, unknown>)?.razaoSocial ??
+          'Secretaria de Saúde RJ'
+        ),
+        cnpjOrgao: String((item.orgaoEntidade as Record<string, unknown>)?.cnpj ?? SES_RJ_CNPJ),
         objeto,
-        modalidade: String(item.modalidade ?? item.MODALIDADE ?? 'Não informada'),
-        valorEstimado: Number(item.valorEstimado ?? item.VALOR ?? 0) || null,
-        dataPublicacao: String(item.dataPublicacao ?? item.DATA_PUBLICACAO ?? today()).slice(0, 10),
-        dataAbertura: item.dataAbertura ? String(item.dataAbertura).slice(0, 10) : null,
+        modalidade: String(item.modalidadeNome ?? 'Não informada'),
+        valorEstimado: Number(item.valorTotalEstimado ?? 0) || null,
+        dataPublicacao: String(item.dataPublicacaoPncp ?? today()).slice(0, 10),
+        dataAbertura: item.dataAberturaProposta ? String(item.dataAberturaProposta).slice(0, 10) : null,
         status: 'ativa',
-        urlEdital: item.url ? String(item.url) : null,
-        municipio: 'Rio de Janeiro',
+        urlEdital: item.linkSistemaOrigem ? String(item.linkSistemaOrigem) : null,
+        municipio: String((item.unidadeOrgao as Record<string, unknown>)?.municipioNome ?? 'Rio de Janeiro'),
         uf: 'RJ',
         palavrasEncontradas: encontrarPalavras(objeto),
       });
     }
 
+    console.log(`SEPLAG-RJ: ${dados.length} itens após filtro`);
     return { dados, status: { ...statusBase, ativa: true, totalEncontrado: dados.length } };
   } catch (e) {
+    console.log('SEPLAG-RJ: erro', String(e));
     return { dados: [], status: { ...statusBase, erro: String(e) } };
   }
 }
 
-// ─── BLL ──────────────────────────────────────────────────────────────────────
+// ─── BLL → BLL API (saúde hospitalar, RJ) ────────────────────────────────────
 
 export async function scrapeBLL(): Promise<{ dados: LicitacaoMonitor[]; status: StatusFonte }> {
   const statusBase: StatusFonte = { fonte: 'BLL', ativa: false, ultimaVerificacao: new Date().toISOString() };
   try {
-    const url = `https://bllcompras.com/api/v1/licitacoes?uf=RJ&dataInicio=${daysAgo(30)}&dataFim=${today()}&pagina=1&itensPorPagina=50`;
+    const url = `https://bll.org.br/api/v2/licitacoes?uf=RJ&status=aberta&palavraChave=hospitalar&pagina=1&itensPorPagina=50`;
+    console.log('BLL: buscando...', url);
     const res = await safeFetch(url, { headers: { Accept: 'application/json' } });
-    if (!res?.ok) return { dados: [], status: { ...statusBase, erro: `HTTP ${res?.status ?? 'timeout'}` } };
+    if (!res?.ok) {
+      console.log(`BLL: HTTP ${res?.status ?? 'timeout'}`);
+      return { dados: [], status: { ...statusBase, erro: `HTTP ${res?.status ?? 'timeout'}` } };
+    }
 
-    const json = await res.json() as { items?: unknown[]; data?: unknown[] };
-    const items = (json.items ?? json.data ?? []) as Record<string, unknown>[];
+    const json = await res.json() as { items?: unknown[]; data?: unknown[]; licitacoes?: unknown[] };
+    const items = (json.items ?? json.data ?? json.licitacoes ?? []) as Record<string, unknown>[];
+    console.log(`BLL: ${items.length} itens brutos`);
+
     const dados: LicitacaoMonitor[] = [];
-
     for (const item of items) {
       const objeto = String(item.objeto ?? item.descricao ?? '');
       if (!temPalavraChave(objeto)) continue;
       dados.push({
         id: `bll-${item.id ?? Math.random().toString(36).slice(2)}`,
         fonte: 'BLL',
-        orgao: String(item.orgao ?? item.municipio ?? 'Município RJ'),
+        orgao: String(item.orgao ?? item.nomeOrgao ?? item.municipio ?? 'Município RJ'),
         objeto,
         modalidade: String(item.modalidade ?? 'Não informada'),
         valorEstimado: Number(item.valor ?? item.valorEstimado ?? 0) || null,
@@ -124,8 +159,10 @@ export async function scrapeBLL(): Promise<{ dados: LicitacaoMonitor[]; status: 
       });
     }
 
+    console.log(`BLL: ${dados.length} itens após filtro`);
     return { dados, status: { ...statusBase, ativa: true, totalEncontrado: dados.length } };
   } catch (e) {
+    console.log('BLL: erro', String(e));
     return { dados: [], status: { ...statusBase, erro: String(e) } };
   }
 }

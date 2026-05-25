@@ -53,18 +53,25 @@ export async function buscarLicitacoesPNCP(options: {
       const params = new URLSearchParams({
         dataInicial, dataFinal,
         pagina: String(pagina),
-        tamanhoPagina: '20',
+        tamanhoPagina: '50',
       });
-      if (uf) params.set('ufSigla', uf);
+      if (uf) params.set('uf', uf);
 
-      const res = await fetch(
-        `https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao?${params}`,
-        { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(15000) }
-      );
-      if (!res.ok) break;
+      const url = `https://pncp.gov.br/api/pncp/v1/contratacoes/publicacoes?${params}`;
+      console.log(`PNCP: buscando página ${pagina}...`, url);
+
+      const res = await fetch(url, {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(15000),
+      });
+      if (!res.ok) {
+        console.log(`PNCP: HTTP ${res.status} na página ${pagina}`);
+        break;
+      }
 
       const json = await res.json() as { data?: PNCPItem[]; totalPaginas?: number };
       const items = json.data ?? [];
+      console.log(`PNCP: página ${pagina} → ${items.length} itens`);
       if (items.length === 0) break;
 
       for (const item of items) {
@@ -93,9 +100,13 @@ export async function buscarLicitacoesPNCP(options: {
       }
 
       if (pagina >= (json.totalPaginas ?? paginas)) break;
-    } catch { break; }
+    } catch (e) {
+      console.log('PNCP: erro na paginação', String(e));
+      break;
+    }
   }
 
+  console.log(`PNCP: total encontrado após filtro = ${resultado.length}`);
   return resultado;
 }
 
