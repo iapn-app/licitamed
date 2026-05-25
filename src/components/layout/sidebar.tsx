@@ -20,6 +20,8 @@ import {
   Crosshair,
   Upload,
   LogOut,
+  ShieldCheck,
+  Newspaper,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -55,6 +57,8 @@ const navItems: NavItem[] = [
   { href: "/execucao", label: "Execução", icon: ClipboardCheck },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/monitor", label: "Monitor", icon: Radio },
+  { href: "/anvisa", label: "ANVISA", icon: ShieldCheck },
+  { href: "/dou", label: "Diário Oficial", icon: Newspaper },
   { href: "/documentos", label: "Documentos", icon: FolderOpen },
   { href: "/configuracoes", label: "Configurações", icon: Settings },
   { href: "/importar", label: "Importar Dados", icon: Upload },

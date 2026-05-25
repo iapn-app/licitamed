@@ -9,8 +9,11 @@ import {
   ChevronDown,
   FileText,
   Plus,
+  ShieldCheck,
+  Newspaper,
 } from "lucide-react";
 import Link from "next/link";
+import { DashboardDOUWidget } from "@/components/dashboard/DashboardDOUWidget";
 import { getStatusLabel, getStatusColor } from "@/lib/mock-data";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
@@ -266,6 +269,40 @@ export default async function DashboardPage() {
               </tbody>
             </table>
           )}
+        </NeonCard>
+      </div>
+
+      {/* Módulos ANVISA + DOU */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Link href="/anvisa" className="block">
+          <NeonCard className="p-5 shadow-card hover:border-[#06B6D4]/40 transition-colors cursor-pointer">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-md bg-[#ECFEFF] flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-5 h-5 text-[#06B6D4]" />
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-neutral-900">Consulta ANVISA</h3>
+                <p className="text-xs text-neutral-400">Verificar registros de produtos</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-neutral-300 ml-auto" />
+            </div>
+            <p className="text-xs text-neutral-500 leading-relaxed">
+              Pesquise registros de materiais médico-hospitalares e medicamentos, verifique validade e situação cadastral junto à ANVISA.
+            </p>
+          </NeonCard>
+        </Link>
+
+        <NeonCard className="p-5 shadow-card">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-md bg-orange-50 flex items-center justify-center flex-shrink-0">
+              <Newspaper className="w-5 h-5 text-orange-500" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-neutral-900">Diário Oficial — hoje</h3>
+              <p className="text-xs text-neutral-400">Publicações relevantes (últimos 3 dias)</p>
+            </div>
+          </div>
+          <DashboardDOUWidget />
         </NeonCard>
       </div>
 

@@ -4,8 +4,9 @@ import { useState, useCallback } from "react";
 import {
   Radio, Search, RefreshCw, ExternalLink, Clock,
   TrendingUp, FileText, DollarSign, CheckCircle2, XCircle,
-  AlertCircle, ChevronUp, ChevronDown, X,
+  AlertCircle, ChevronUp, ChevronDown, X, ShieldCheck, Newspaper,
 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/shared/skeleton";
@@ -463,7 +464,7 @@ export default function MonitorPage() {
                 </a>
               )}
 
-              <div className="flex gap-2 pt-2">
+              <div className="flex flex-wrap gap-2 pt-2 border-t border-neutral-100">
                 <Button
                   className="flex-1"
                   onClick={() => {
@@ -473,7 +474,25 @@ export default function MonitorPage() {
                 >
                   Importar para Power Med
                 </Button>
-                <Button variant="outline" onClick={() => setSelected(null)}>Fechar</Button>
+                <Link
+                  href={`/anvisa?q=${encodeURIComponent(selected.objeto.slice(0, 80))}`}
+                  target="_blank"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-neutral-200 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+                  onClick={() => setSelected(null)}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#06B6D4]" />
+                  Verificar ANVISA
+                </Link>
+                <Link
+                  href={`/dou?q=${encodeURIComponent(selected.orgao.slice(0, 60))}&secao=DO3`}
+                  target="_blank"
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-neutral-200 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+                  onClick={() => setSelected(null)}
+                >
+                  <Newspaper className="w-3.5 h-3.5 text-orange-500" />
+                  Buscar no DOU
+                </Link>
+                <Button variant="outline" onClick={() => setSelected(null)} className="shrink-0">Fechar</Button>
               </div>
             </div>
           )}

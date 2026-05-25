@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { adminSupabase } from "@/lib/supabase";
 
+export const dynamic = 'force-dynamic';
+
 export async function DELETE() {
   const admin = adminSupabase();
 
