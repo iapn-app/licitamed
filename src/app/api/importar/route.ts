@@ -4,7 +4,7 @@ import { adminSupabase } from "@/lib/supabase";
 
 export const maxDuration = 60;
 
-interface ClaudeResult {
+interface AIResult {
   tipo: "licitacoes" | "fornecedores" | "cotacoes" | "itens_licitacao" | "misto";
   confianca: number;
   registros: Record<string, unknown>[];
@@ -45,32 +45,19 @@ export async function POST(request: NextRequest) {
     const totalLinhas = sheetData.length - 1;
     const preview = sheetData.slice(0, 50);
 
-    // Claude API
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    // Gemini API (free tier — aistudio.google.com/apikey)
+    const apiKey = process.env.GOOGLE_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         {
           error:
-            "ANTHROPIC_API_KEY não configurada. Adicione a variável nas configurações do projeto no Vercel.",
+            "GOOGLE_API_KEY não configurada. Obtenha grátis em aistudio.google.com/apikey e adicione no Vercel em Settings → Environment Variables.",
         },
         { status: 500 }
       );
     }
 
-    const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 4096,
-        messages: [
-          {
-            role: "user",
-            content: `Você é especialista em dados de distribuidoras hospitalares brasileiras.
+    const prompt = `Você é especialista em dados de distribuidoras hospitalares brasileiras.
 
 Analise esta planilha e retorne APENAS um JSON válido (sem markdown, sem texto extra) com:
 1. "tipo": um de "licitacoes", "fornecedores", "cotacoes", "itens_licitacao" ou "misto"
@@ -86,31 +73,39 @@ Mapeamentos:
 - itens_licitacao → numero_item, descricao, quantidade, unidade, categoria
 
 Planilha (${totalLinhas} linhas totais, mostrando ${preview.length - 1}):
-${JSON.stringify(preview)}`,
-          },
-        ],
-      }),
-      signal: AbortSignal.timeout(30000),
-    });
+${JSON.stringify(preview)}`;
 
-    if (!claudeRes.ok) {
-      const txt = await claudeRes.text();
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 4096 },
+        }),
+        signal: AbortSignal.timeout(30000),
+      }
+    );
+
+    if (!geminiRes.ok) {
+      const txt = await geminiRes.text();
       return NextResponse.json(
-        { error: `Claude retornou ${claudeRes.status}: ${txt.slice(0, 300)}` },
+        { error: `Gemini retornou ${geminiRes.status}: ${txt.slice(0, 300)}` },
         { status: 500 }
       );
     }
 
-    const claudeData = (await claudeRes.json()) as {
-      content: { type: string; text: string }[];
+    const geminiData = (await geminiRes.json()) as {
+      candidates: { content: { parts: { text: string }[] } }[];
     };
     const rawText =
-      claudeData.content?.find((c) => c.type === "text")?.text ?? "";
+      geminiData.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
-    let analysis: ClaudeResult;
+    let analysis: AIResult;
     try {
       const match = rawText.match(/\{[\s\S]*\}/);
-      analysis = JSON.parse(match ? match[0] : rawText) as ClaudeResult;
+      analysis = JSON.parse(match ? match[0] : rawText) as AIResult;
     } catch {
       return NextResponse.json(
         { error: "IA não retornou JSON válido", raw: rawText.slice(0, 500) },
