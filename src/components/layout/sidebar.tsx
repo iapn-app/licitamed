@@ -45,6 +45,7 @@ const navItems: NavItem[] = [
     icon: Users,
     children: [
       { href: "/fornecedores/radar", label: "Radar", icon: Radar },
+      { href: "/fornecedores/vencedores", label: "Vencedores RJ", icon: Radio },
     ],
   },
   { href: "/cotacoes", label: "Cotações", icon: ClipboardList },
