@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   Radio, Search, RefreshCw, ExternalLink, Clock,
   TrendingUp, FileText, DollarSign, CheckCircle2, XCircle,
-  AlertCircle, ChevronUp, ChevronDown, X, ShieldCheck, Newspaper,
+  AlertCircle, ChevronUp, ChevronDown, X, ShieldCheck, Newspaper, Star,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -140,6 +140,23 @@ export default function MonitorPage() {
 
   // Detail modal
   const [selected, setSelected] = useState<LicitacaoMonitor | null>(null);
+  const [orgaoScore, setOrgaoScore] = useState<{ score: number; classificacao: string } | null>(null);
+  const [scoreLoading, setScoreLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selected?.cnpjOrgao) { setOrgaoScore(null); return; }
+    const cnpj = selected.cnpjOrgao.replace(/\D/g, '');
+    if (cnpj.length !== 14) return;
+    setScoreLoading(true);
+    setOrgaoScore(null);
+    fetch(`/api/score-orgao?cnpj=${cnpj}`)
+      .then(r => r.json())
+      .then((d: { score?: number; classificacao?: string }) => {
+        if (d.score !== undefined) setOrgaoScore({ score: d.score, classificacao: d.classificacao ?? 'regular' });
+      })
+      .catch(() => null)
+      .finally(() => setScoreLoading(false));
+  }, [selected?.cnpjOrgao]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -472,6 +489,35 @@ export default function MonitorPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Score do Órgão */}
+              {selected.cnpjOrgao && (
+                <div className="flex items-center gap-3 px-4 py-3 bg-neutral-50 rounded-md">
+                  <Star className="w-4 h-4 text-[#06B6D4] shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide">Score do Órgão</p>
+                    {scoreLoading && <div className="w-16 h-4 bg-neutral-200 animate-pulse rounded mt-1" />}
+                    {!scoreLoading && orgaoScore && (() => {
+                      const colors: Record<string, string> = {
+                        excelente: 'bg-green-50 text-green-700 border-green-200',
+                        bom: 'bg-blue-50 text-blue-700 border-blue-200',
+                        regular: 'bg-orange-50 text-orange-700 border-orange-200',
+                        risco: 'bg-red-50 text-red-700 border-red-200',
+                      };
+                      const emojis: Record<string, string> = { excelente: '🟢', bom: '🔵', regular: '🟠', risco: '🔴' };
+                      return (
+                        <span className={cn('mt-1 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border', colors[orgaoScore.classificacao] ?? colors.regular)}>
+                          {emojis[orgaoScore.classificacao] ?? '⚪'} {orgaoScore.score}/100
+                        </span>
+                      );
+                    })()}
+                    {!scoreLoading && !orgaoScore && <p className="text-xs text-neutral-400 mt-0.5">Sem dados no PNCP</p>}
+                  </div>
+                  <Link href={`/score-orgao?cnpj=${selected.cnpjOrgao}`} target="_blank" className="text-[10px] font-medium text-[#06B6D4] hover:text-[#0891B2] whitespace-nowrap">
+                    Ver análise →
+                  </Link>
+                </div>
+              )}
 
               {selected.urlEdital && (
                 <a

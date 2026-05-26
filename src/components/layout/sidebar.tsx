@@ -25,6 +25,7 @@ import {
   CalendarDays,
   BarChart2,
   MapPin,
+  Star,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +62,7 @@ const navItems: NavItem[] = [
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/monitor", label: "Monitor", icon: Radio },
   { href: "/anvisa", label: "ANVISA", icon: ShieldCheck },
+  { href: "/score-orgao", label: "Score de Órgãos", icon: Star },
   { href: "/dou", label: "Diário Oficial", icon: Newspaper },
   { href: "/documentos", label: "Documentos", icon: FolderOpen },
   { href: "/calendario", label: "Calendário", icon: CalendarDays },
