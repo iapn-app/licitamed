@@ -193,15 +193,17 @@ function templateParaItens(): AIItem[] {
 export async function POST(request: NextRequest) {
   const db = adminSupabase();
   if (!db) {
+    console.error('[checklist/gerar] SUPABASE_SERVICE_ROLE_KEY não configurada');
     return NextResponse.json({ erro: 'Banco de dados não configurado' }, { status: 500 });
   }
 
-  const body = await request.json() as {
-    licitacaoId: string;
-    objeto: string;
-    orgao: string;
-    textoEdital?: string;
-  };
+  let body: { licitacaoId: string; objeto: string; orgao: string; textoEdital?: string };
+  try {
+    body = await request.json() as typeof body;
+  } catch (e) {
+    console.error('[checklist/gerar] Erro ao parsear body:', e);
+    return NextResponse.json({ erro: 'Body inválido' }, { status: 400 });
+  }
 
   if (!body.licitacaoId || !body.objeto) {
     return NextResponse.json({ erro: 'licitacaoId e objeto são obrigatórios' }, { status: 400 });
@@ -228,6 +230,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (errChecklist || !checklist) {
+    console.error('[checklist/gerar] Erro ao criar checklist:', errChecklist);
     return NextResponse.json({ erro: errChecklist?.message ?? 'Erro ao criar checklist' }, { status: 500 });
   }
 
@@ -246,6 +249,7 @@ export async function POST(request: NextRequest) {
 
   const { error: errItens } = await db.from('checklist_itens').insert(rows);
   if (errItens) {
+    console.error('[checklist/gerar] Erro ao inserir itens:', errItens);
     await db.from('checklists').delete().eq('id', checklist.id);
     return NextResponse.json({ erro: errItens.message }, { status: 500 });
   }

@@ -5,7 +5,10 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const db = adminSupabase();
-  if (!db) return NextResponse.json({ erro: 'Banco não configurado' }, { status: 500 });
+  if (!db) {
+    console.error('[checklists] SUPABASE_SERVICE_ROLE_KEY não configurada');
+    return NextResponse.json({ erro: 'Banco não configurado' }, { status: 500 });
+  }
 
   const licitacaoId = request.nextUrl.searchParams.get('licitacaoId');
 
@@ -17,7 +20,10 @@ export async function GET(request: NextRequest) {
   if (licitacaoId) query = query.eq('licitacao_id', licitacaoId);
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ erro: error.message }, { status: 500 });
+  if (error) {
+    console.error('[checklists] Erro na query:', error.message, error.code);
+    return NextResponse.json({ erro: error.message }, { status: 500 });
+  }
 
   // Get item counts per checklist
   const ids = (data ?? []).map(c => c.id);
