@@ -26,10 +26,11 @@ function formatCNPJ(c: string) {
 }
 
 const SCORE_CONFIG: Record<string, { color: string; ring: string; bg: string; label: string; emoji: string }> = {
-  excelente: { color: 'text-green-700', ring: '#16A34A', bg: 'bg-green-50 border-green-200', label: 'Excelente pagador', emoji: '🟢' },
-  bom:       { color: 'text-blue-700',  ring: '#2563EB', bg: 'bg-blue-50 border-blue-200',   label: 'Bom pagador',       emoji: '🔵' },
-  regular:   { color: 'text-orange-700',ring: '#EA580C', bg: 'bg-orange-50 border-orange-200',label: 'Pagador regular',   emoji: '🟠' },
-  risco:     { color: 'text-red-700',   ring: '#DC2626', bg: 'bg-red-50 border-red-200',      label: 'Alto risco',        emoji: '🔴' },
+  excelente:    { color: 'text-green-700',  ring: '#16A34A', bg: 'bg-green-50 border-green-200',   label: 'Excelente pagador',   emoji: '🟢' },
+  bom:          { color: 'text-blue-700',   ring: '#2563EB', bg: 'bg-blue-50 border-blue-200',     label: 'Bom pagador',         emoji: '🔵' },
+  regular:      { color: 'text-orange-700', ring: '#EA580C', bg: 'bg-orange-50 border-orange-200', label: 'Pagador regular',     emoji: '🟠' },
+  risco:        { color: 'text-red-700',    ring: '#DC2626', bg: 'bg-red-50 border-red-200',       label: 'Alto risco',          emoji: '🔴' },
+  insuficiente: { color: 'text-neutral-600',ring: '#9CA3AF', bg: 'bg-neutral-100 border-neutral-300',label: 'Dados insuficientes',emoji: '⚠️' },
 };
 
 function ScoreGauge({ score, classificacao }: { score: number; classificacao: string }) {
@@ -224,19 +225,54 @@ export default function ScoreOrgaoPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Score gauge */}
             <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card p-6 flex flex-col items-center gap-4">
-              <ScoreGauge score={r.score} classificacao={r.classificacao} />
+              <ScoreGauge score={r.dadosInsuficientes && r.semChaveTransparencia ? 0 : r.score} classificacao={r.classificacao} />
               <div className="text-center">
-                <p className="text-sm font-semibold text-neutral-900 truncate max-w-[180px]">{r.nomeOrgao}</p>
-                <p className="text-[10px] text-neutral-400 mt-0.5">{formatCNPJ(r.cnpj)}</p>
+                <div className="flex items-center justify-center gap-1.5 flex-wrap mb-0.5">
+                  <p className="text-sm font-semibold text-neutral-900">{r.nomeOrgao !== r.cnpj ? r.nomeOrgao : formatCNPJ(r.cnpj)}</p>
+                  {r.federal && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">GOV FEDERAL</span>
+                  )}
+                </div>
+                <p className="text-[10px] text-neutral-400">{formatCNPJ(r.cnpj)}</p>
+                {r.buscouRaiz && (
+                  <p className="text-[10px] text-amber-600 mt-1">⚠️ Subunidade — buscando pela org. principal</p>
+                )}
               </div>
+
+              {/* Badges de avisos */}
+              {r.dadosInsuficientes && (
+                <div className="w-full flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-md">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <p className="text-xs font-medium text-amber-700">
+                    Dados insuficientes ({r.totalContratos} contrato{r.totalContratos !== 1 ? 's' : ''} no PNCP)
+                  </p>
+                </div>
+              )}
+              {r.semChaveTransparencia && (
+                <div className="w-full flex items-center gap-2 px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-md">
+                  <Info className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                  <p className="text-[10px] text-neutral-500">
+                    Configure <code className="font-mono bg-neutral-200 px-0.5 rounded">TRANSPARENCIA_API_KEY</code> para dados de pagamento
+                  </p>
+                </div>
+              )}
               {r.irregularidades && (
                 <div className="w-full flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-md">
-                  <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
                   <p className="text-xs font-medium text-red-700">Irregularidade no CEIS/CNEP</p>
                 </div>
               )}
+              {r.bonusFederal > 0 && (
+                <div className="w-full flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-md">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <p className="text-[10px] text-blue-700">
+                    Bônus federal aplicado: +{r.bonusFederal} pts (score base: {r.scoreBase})
+                  </p>
+                </div>
+              )}
+
               <div className="w-full text-center text-[10px] text-neutral-400">
-                Fontes: {r.fontesDados.join(' · ')}
+                Score baseado em {r.totalContratos} contrato{r.totalContratos !== 1 ? 's' : ''} analisados · {r.fontesDados.join(' · ')}
               </div>
             </div>
 
