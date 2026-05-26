@@ -30,10 +30,14 @@ export async function GET(request: NextRequest) {
   const fmt = (d: Date) => d.toISOString().slice(0, 10).replace(/-/g, "");
 
   try {
-    const url =
-      `https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao` +
-      `?dataInicial=${fmt(start)}&dataFinal=${fmt(today)}` +
-      `&codigoModalidadeContratacao=6&pagina=1&tamanhoPagina=50`;
+    const params = new URLSearchParams({
+      dataInicial: fmt(start),
+      dataFinal: fmt(today),
+      pagina: '1',
+      tamanhoPagina: '50',
+      ...(uf ? { uf } : {}),
+    });
+    const url = `https://pncp.gov.br/api/pncp/v1/contratacoes/publicacoes?${params}`;
 
     const res = await fetch(url, {
       headers: { Accept: "application/json" },
@@ -44,7 +48,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ useMock: true, error: `PNCP ${res.status}` });
     }
 
-    const raw = await res.json();
+    const raw = await res.json() as { data?: PNCPItem[] };
     let items: PNCPItem[] = raw.data ?? [];
 
     // Filter by hospital keywords
@@ -52,13 +56,6 @@ export async function GET(request: NextRequest) {
       const obj = (item.objetoCompra ?? "").toLowerCase();
       return HOSPITAL_KW.some((kw) => obj.includes(kw));
     });
-
-    // Filter by UF if provided
-    if (uf) {
-      items = items.filter(
-        (item) => (item.unidadeOrgao?.ufSigla ?? "").toUpperCase() === uf
-      );
-    }
 
     const data = items.map((item) => ({
       id: item.numeroControlePNCP ?? Math.random().toString(36).slice(2),

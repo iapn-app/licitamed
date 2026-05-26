@@ -22,6 +22,9 @@ import {
   LogOut,
   ShieldCheck,
   Newspaper,
+  CalendarDays,
+  BarChart2,
+  MapPin,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -60,6 +63,9 @@ const navItems: NavItem[] = [
   { href: "/anvisa", label: "ANVISA", icon: ShieldCheck },
   { href: "/dou", label: "Diário Oficial", icon: Newspaper },
   { href: "/documentos", label: "Documentos", icon: FolderOpen },
+  { href: "/calendario", label: "Calendário", icon: CalendarDays },
+  { href: "/relatorios", label: "Relatórios", icon: BarChart2 },
+  { href: "/crm", label: "CRM Municipal", icon: MapPin },
   { href: "/configuracoes", label: "Configurações", icon: Settings },
   { href: "/importar", label: "Importar Dados", icon: Upload },
 ];

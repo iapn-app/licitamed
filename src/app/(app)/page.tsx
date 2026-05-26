@@ -11,6 +11,13 @@ import {
   Plus,
   ShieldCheck,
   Newspaper,
+  Sparkles,
+  FolderOpen,
+  CalendarDays,
+  BarChart2,
+  ClipboardCheck,
+  MapPin,
+  Crosshair,
 } from "lucide-react";
 import Link from "next/link";
 import { DashboardDOUWidget } from "@/components/dashboard/DashboardDOUWidget";
@@ -32,10 +39,18 @@ export default async function DashboardPage() {
     { data: licitacoesData, error: licitacoesError },
     { count: fornecedoresAguardando },
     { count: itensSemCotacao },
+    { count: docsVencidos },
+    { count: docsAVencer },
+    { count: contratosAtivos },
+    { count: municipiosCRM },
   ] = await Promise.all([
     supabase.from("licitacoes").select("*").order("created_at", { ascending: false }),
     supabase.from("cotacoes").select("*", { count: "exact", head: true }).eq("status", "enviada"),
     supabase.from("itens_licitacao").select("*", { count: "exact", head: true }).eq("status", "sem_cotacao"),
+    supabase.from("documentos_habilitacao").select("*", { count: "exact", head: true }).eq("status", "vencido"),
+    supabase.from("documentos_habilitacao").select("*", { count: "exact", head: true }).eq("status", "a_vencer"),
+    supabase.from("contratos_execucao").select("*", { count: "exact", head: true }).eq("status", "em_execucao"),
+    supabase.from("municipios_crm").select("*", { count: "exact", head: true }).not("etapa", "in", '("ganho","perdido")'),
   ]);
 
   if (licitacoesError) {
@@ -304,6 +319,84 @@ export default async function DashboardPage() {
           </div>
           <DashboardDOUWidget />
         </NeonCard>
+      </div>
+
+      {/* Módulos de gestão */}
+      <div>
+        <h2 className="text-sm font-semibold text-neutral-900 mb-3">Módulos</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+          {[
+            { href: "/preco-vencedor", label: "Preço IA", sub: "Calcular proposta", icon: Sparkles, color: "bg-purple-50", ic: "text-purple-500" },
+            {
+              href: "/documentos",
+              label: "Documentos",
+              sub: `${(docsVencidos ?? 0) > 0 ? `${docsVencidos} vencido${(docsVencidos ?? 0) > 1 ? 's' : ''}` : (docsAVencer ?? 0) > 0 ? `${docsAVencer} a vencer` : 'Em dia'}`,
+              icon: FolderOpen,
+              color: (docsVencidos ?? 0) > 0 ? "bg-red-50" : (docsAVencer ?? 0) > 0 ? "bg-yellow-50" : "bg-green-50",
+              ic: (docsVencidos ?? 0) > 0 ? "text-red-500" : (docsAVencer ?? 0) > 0 ? "text-yellow-500" : "text-green-500",
+            },
+            { href: "/calendario", label: "Calendário", sub: "Prazos e pregões", icon: CalendarDays, color: "bg-blue-50", ic: "text-blue-500" },
+            {
+              href: "/execucao",
+              label: "Execução",
+              sub: `${contratosAtivos ?? 0} contrato${(contratosAtivos ?? 0) !== 1 ? 's' : ''} ativo${(contratosAtivos ?? 0) !== 1 ? 's' : ''}`,
+              icon: ClipboardCheck,
+              color: "bg-[#ECFEFF]",
+              ic: "text-[#06B6D4]",
+            },
+            {
+              href: "/crm",
+              label: "CRM Municipal",
+              sub: `${municipiosCRM ?? 0} em pipeline`,
+              icon: MapPin,
+              color: "bg-orange-50",
+              ic: "text-orange-500",
+            },
+            { href: "/relatorios", label: "Relatórios", sub: "Gerar semanal", icon: BarChart2, color: "bg-neutral-100", ic: "text-neutral-500" },
+          ].map(({ href, label, sub, icon: Icon, color, ic }) => (
+            <Link key={href} href={href} className="block">
+              <div className="bg-white rounded-lg border border-neutral-200 p-4 hover:border-[#06B6D4]/40 hover:shadow-sm transition-all cursor-pointer group">
+                <div className={`w-8 h-8 rounded-md ${color} flex items-center justify-center mb-3`}>
+                  <Icon className={`w-4 h-4 ${ic}`} />
+                </div>
+                <p className="text-xs font-semibold text-neutral-800 group-hover:text-[#06B6D4] transition-colors">{label}</p>
+                <p className="text-[10px] text-neutral-400 mt-0.5">{sub}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Concorrentes + Monitor quick links */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Link href="/concorrentes" className="block">
+          <NeonCard className="p-5 shadow-card hover:border-[#06B6D4]/40 transition-colors cursor-pointer">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-md bg-red-50 flex items-center justify-center flex-shrink-0">
+                <Crosshair className="w-5 h-5 text-red-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-neutral-900">Radar de Concorrentes</h3>
+                <p className="text-xs text-neutral-400">Disputas reais do PNCP por setor hospitalar</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-neutral-300" />
+            </div>
+          </NeonCard>
+        </Link>
+        <Link href="/monitor" className="block">
+          <NeonCard className="p-5 shadow-card hover:border-[#06B6D4]/40 transition-colors cursor-pointer">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-md bg-[#ECFEFF] flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-5 h-5 text-[#06B6D4]" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-neutral-900">Monitor de Licitações</h3>
+                <p className="text-xs text-neutral-400">Novas licitações hospitalares em RJ ao vivo</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-neutral-300" />
+            </div>
+          </NeonCard>
+        </Link>
       </div>
 
       {/* Quick actions + Próximos prazos */}
