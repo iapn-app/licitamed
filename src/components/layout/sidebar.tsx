@@ -27,6 +27,7 @@ import {
   MapPin,
   Star,
   Siren,
+  ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +66,7 @@ const navItems: NavItem[] = [
   { href: "/monitor", label: "Monitor", icon: Radio },
   { href: "/anvisa", label: "ANVISA", icon: ShieldCheck },
   { href: "/score-orgao", label: "Score de Órgãos", icon: Star },
+  { href: "/checklists", label: "Checklists IA", icon: ListChecks },
   { href: "/dou", label: "Diário Oficial", icon: Newspaper },
   { href: "/documentos", label: "Documentos", icon: FolderOpen },
   { href: "/calendario", label: "Calendário", icon: CalendarDays },

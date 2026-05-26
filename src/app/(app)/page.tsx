@@ -18,6 +18,7 @@ import {
   ClipboardCheck,
   MapPin,
   Crosshair,
+  ListChecks,
 } from "lucide-react";
 import Link from "next/link";
 import { DashboardDOUWidget } from "@/components/dashboard/DashboardDOUWidget";
@@ -43,6 +44,8 @@ export default async function DashboardPage() {
     { count: docsAVencer },
     { count: contratosAtivos },
     { count: municipiosCRM },
+    { count: totalChecklists },
+    { count: checklistsCriticos },
   ] = await Promise.all([
     supabase.from("licitacoes").select("*").order("created_at", { ascending: false }),
     supabase.from("cotacoes").select("*", { count: "exact", head: true }).eq("status", "enviada"),
@@ -51,6 +54,8 @@ export default async function DashboardPage() {
     supabase.from("documentos_habilitacao").select("*", { count: "exact", head: true }).eq("status", "a_vencer"),
     supabase.from("contratos_execucao").select("*", { count: "exact", head: true }).eq("status", "em_execucao"),
     supabase.from("municipios_crm").select("*", { count: "exact", head: true }).not("etapa", "in", '("ganho","perdido")'),
+    supabase.from("checklists").select("*", { count: "exact", head: true }),
+    supabase.from("checklists").select("*", { count: "exact", head: true }).eq("status", "critico"),
   ]);
 
   if (licitacoesError) {
@@ -351,6 +356,14 @@ export default async function DashboardPage() {
               icon: MapPin,
               color: "bg-orange-50",
               ic: "text-orange-500",
+            },
+            {
+              href: "/checklists",
+              label: "Checklists IA",
+              sub: (checklistsCriticos ?? 0) > 0 ? `${checklistsCriticos} crítico${(checklistsCriticos ?? 0) > 1 ? 's' : ''}` : `${totalChecklists ?? 0} gerado${(totalChecklists ?? 0) !== 1 ? 's' : ''}`,
+              icon: ListChecks,
+              color: (checklistsCriticos ?? 0) > 0 ? "bg-red-50" : "bg-[#ECFEFF]",
+              ic: (checklistsCriticos ?? 0) > 0 ? "text-red-500" : "text-[#06B6D4]",
             },
             { href: "/relatorios", label: "Relatórios", sub: "Gerar semanal", icon: BarChart2, color: "bg-neutral-100", ic: "text-neutral-500" },
           ].map(({ href, label, sub, icon: Icon, color, ic }) => (
