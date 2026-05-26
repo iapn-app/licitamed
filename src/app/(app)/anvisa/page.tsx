@@ -31,6 +31,20 @@ interface ANVISAItem {
 type SortKey = 'nomeProduto' | 'situacao' | 'dataVencimento' | 'razaoSocial';
 type SortDir = 'asc' | 'desc';
 
+function normalize(item: Record<string, unknown>): ANVISAItem {
+  const emp = (item.empresa ?? {}) as Record<string, unknown>;
+  return {
+    numeroRegistro: String(item.numeroRegistro ?? item.numero ?? ''),
+    nomeProduto: String(item.nomeProduto ?? item.nome ?? item.produto ?? ''),
+    razaoSocial: String(emp.razaoSocial ?? item.razaoSocial ?? item.empresa ?? ''),
+    cnpj: String(emp.cnpj ?? item.cnpj ?? ''),
+    situacao: String(item.situacao ?? item.situacaoRegistro ?? ''),
+    dataVencimento: String(item.dataVencimento ?? item.vencimento ?? ''),
+    categoria: String(item.categoria ?? item.categoriaRegulatoria ?? ''),
+    classeRisco: String(item.classeRisco ?? item.classe ?? ''),
+  };
+}
+
 function SituacaoBadge({ situacao }: { situacao: string }) {
   const s = situacao.toLowerCase();
   if (s.includes('válido') || s.includes('valido') || s === 'ativo') {
@@ -106,13 +120,22 @@ export default function AnvisaPage() {
     setState('loading');
     setResultados([]);
     try {
-      const params = new URLSearchParams({ q: searchQuery.trim(), tipo });
-      const res = await fetch(`/api/anvisa/consulta?${params}`);
-      const data = await res.json() as { resultados?: ANVISAItem[]; erro?: string };
-      if (data.erro && !data.resultados?.length) throw new Error(data.erro);
-      setResultados(data.resultados ?? []);
+      const endpoint = tipo === 'medicamento'
+        ? 'https://consultas.anvisa.gov.br/api/consulta/medicamentos/'
+        : 'https://consultas.anvisa.gov.br/api/consulta/produtosHospitalares/';
+      const isNumero = /^\d{7,}$/.test(searchQuery.replace(/\D/g, '')) && searchQuery.replace(/\D/g, '').length > 6;
+      const filterKey = isNumero ? 'filter[numeroRegistro]' : 'filter[nomeProduto]';
+      const params = new URLSearchParams({ count: '20', [filterKey]: searchQuery.trim() });
+      const res = await fetch(`${endpoint}?${params}`, {
+        headers: { Accept: 'application/json', Authorization: 'Guest' },
+      });
+      if (!res.ok) throw new Error(`ANVISA retornou HTTP ${res.status}`);
+      const data = await res.json() as { content?: unknown[]; data?: unknown[]; result?: unknown[] };
+      const items = (data.content ?? data.data ?? data.result ?? []) as Record<string, unknown>[];
+      const resultadosNorm = items.map(normalize);
+      setResultados(resultadosNorm);
       setState('done');
-      if ((data.resultados?.length ?? 0) === 0) toast.info('Nenhum produto encontrado para essa busca');
+      if (resultadosNorm.length === 0) toast.info('Nenhum produto encontrado para essa busca');
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : String(e));
       setState('error');
