@@ -62,6 +62,27 @@ function isNova(iso: string) {
   return Date.now() - new Date(iso).getTime() < 24 * 3600000;
 }
 
+const KW_STOPWORDS = new Set([
+  'aquisição','aquisicao','de','para','e','do','da','dos','das','material','médico',
+  'medico','hospitalar','com','em','o','a','os','as','um','uma','no','na','nos','nas',
+  'por','pelo','pela','pelos','pelas','ao','aos','que','se','mais','ou','ser','ter',
+  'tipo','conforme','contratação','contratacao','fornecimento','prestação','prestacao',
+  'serviço','servico','serviços','servicos','registro','preço','preco','não','nao',
+  'sob','sua','seu','entre','até','ate','uso','sua','sendo','seja','seus','suas',
+]);
+
+function extractKeywords(objeto: string): string[] {
+  const tokenize = (text: string) =>
+    text.toLowerCase()
+      .split(/[\s,;/|.+&\-–]+/)
+      .map(t => t.replace(/[^a-záàâãéèêíïóôõöúüçñ]/gi, '').trim())
+      .filter(t => t.length > 3 && !KW_STOPWORDS.has(t));
+  const parenTerms = Array.from(objeto.matchAll(/\(([^)]+)\)/g))
+    .flatMap(m => tokenize(m[1]));
+  if (parenTerms.length >= 1) return parenTerms.slice(0, 3);
+  return tokenize(objeto).slice(0, 3);
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function StatCard({ icon: Icon, color, iconColor, label, value, desc }: {
@@ -475,7 +496,7 @@ export default function MonitorPage() {
                   Importar para Power Med
                 </Button>
                 <Link
-                  href={`/anvisa?q=${encodeURIComponent(selected.objeto.slice(0, 80))}`}
+                  href={`/anvisa?q=${encodeURIComponent(extractKeywords(selected.objeto).join(','))}&auto=true`}
                   target="_blank"
                   className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-neutral-200 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
                   onClick={() => setSelected(null)}
@@ -484,7 +505,7 @@ export default function MonitorPage() {
                   Verificar ANVISA
                 </Link>
                 <Link
-                  href={`/dou?q=${encodeURIComponent(selected.orgao.slice(0, 60))}&secao=DO3`}
+                  href={`/dou?q=${encodeURIComponent(extractKeywords(selected.objeto).join(' '))}&auto=true`}
                   target="_blank"
                   className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-neutral-200 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
                   onClick={() => setSelected(null)}

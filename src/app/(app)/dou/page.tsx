@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Newspaper, Search, AlertTriangle, ExternalLink, Bell, RefreshCw,
 } from "lucide-react";
@@ -66,13 +66,15 @@ export default function DOUPage() {
   const [total, setTotal] = useState(0);
   const [powerMedAlerts, setPowerMedAlerts] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
+  const autoFiredRef = useRef(false);
 
-  const buscar = useCallback(async () => {
-    if (!query.trim()) { toast.error('Digite um termo de busca'); return; }
+  const buscar = useCallback(async (overrideQuery?: string) => {
+    const searchQuery = overrideQuery !== undefined ? overrideQuery : query;
+    if (!searchQuery.trim()) { toast.error('Digite um termo de busca'); return; }
     setState('loading');
     setPublicacoes([]);
     try {
-      const params = new URLSearchParams({ q: query.trim(), secao, dias });
+      const params = new URLSearchParams({ q: searchQuery.trim(), secao, dias });
       const res = await fetch(`/api/dou/busca?${params}`);
       const data = await res.json() as {
         publicacoes?: DOUPublicacao[];
@@ -94,6 +96,18 @@ export default function DOUPage() {
       setState('error');
     }
   }, [query, secao, dias]);
+
+  useEffect(() => {
+    if (autoFiredRef.current) return;
+    const sp = new URLSearchParams(window.location.search);
+    const q = sp.get('q');
+    if (q && sp.get('auto') === 'true') {
+      autoFiredRef.current = true;
+      setQuery(q);
+      buscar(q);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -174,7 +188,7 @@ export default function DOUPage() {
           ))}
         </div>
 
-        <Button onClick={buscar} disabled={state === 'loading'} className="gap-2">
+        <Button onClick={() => buscar()} disabled={state === 'loading'} className="gap-2">
           {state === 'loading'
             ? <><RefreshCw className="w-4 h-4 animate-spin" />Buscando no DOU...</>
             : <><Search className="w-4 h-4" />{state === 'done' ? 'Atualizar' : 'Buscar no DOU'}</>
@@ -189,7 +203,7 @@ export default function DOUPage() {
           <div>
             <p className="text-sm font-medium text-red-700">Erro ao acessar o DOU</p>
             <p className="text-xs text-red-500 mt-0.5">{errorMsg}</p>
-            <Button variant="outline" size="sm" className="mt-2" onClick={buscar}>Tentar novamente</Button>
+            <Button variant="outline" size="sm" className="mt-2" onClick={() => buscar()}>Tentar novamente</Button>
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   ShieldCheck, Search, AlertTriangle, CheckCircle2,
   XCircle, Download, ExternalLink, ChevronUp, ChevronDown, Info,
@@ -98,12 +98,15 @@ export default function AnvisaPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [selected, setSelected] = useState<ANVISAItem | null>(null);
 
-  const buscar = useCallback(async () => {
-    if (!query.trim()) { toast.error('Digite um nome de produto ou número de registro'); return; }
+  const autoFiredRef = useRef(false);
+
+  const buscar = useCallback(async (overrideQuery?: string) => {
+    const searchQuery = overrideQuery !== undefined ? overrideQuery : query;
+    if (!searchQuery.trim()) { toast.error('Digite um nome de produto ou número de registro'); return; }
     setState('loading');
     setResultados([]);
     try {
-      const params = new URLSearchParams({ q: query.trim(), tipo });
+      const params = new URLSearchParams({ q: searchQuery.trim(), tipo });
       const res = await fetch(`/api/anvisa/consulta?${params}`);
       const data = await res.json() as { resultados?: ANVISAItem[]; erro?: string };
       if (data.erro && !data.resultados?.length) throw new Error(data.erro);
@@ -115,6 +118,18 @@ export default function AnvisaPage() {
       setState('error');
     }
   }, [query, tipo]);
+
+  useEffect(() => {
+    if (autoFiredRef.current) return;
+    const sp = new URLSearchParams(window.location.search);
+    const q = sp.get('q');
+    if (q && sp.get('auto') === 'true') {
+      autoFiredRef.current = true;
+      setQuery(q);
+      buscar(q);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleSort(k: SortKey) {
     if (k === sortKey) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -192,7 +207,7 @@ export default function AnvisaPage() {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <Button onClick={buscar} disabled={state === 'loading'} className="gap-2">
+          <Button onClick={() => buscar()} disabled={state === 'loading'} className="gap-2">
             {state === 'loading'
               ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Consultando...</>
               : <><Search className="w-4 h-4" />Consultar ANVISA</>
@@ -224,7 +239,7 @@ export default function AnvisaPage() {
           <div>
             <p className="text-sm font-medium text-red-700">Erro ao consultar ANVISA</p>
             <p className="text-xs text-red-500 mt-0.5">{errorMsg}</p>
-            <Button variant="outline" size="sm" className="mt-2" onClick={buscar}>Tentar novamente</Button>
+            <Button variant="outline" size="sm" className="mt-2" onClick={() => buscar()}>Tentar novamente</Button>
           </div>
         </div>
       )}
