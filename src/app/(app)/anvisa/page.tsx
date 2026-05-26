@@ -120,16 +120,12 @@ export default function AnvisaPage() {
     setState('loading');
     setResultados([]);
     try {
-      const endpoint = tipo === 'medicamento'
-        ? 'https://consultas.anvisa.gov.br/api/consulta/medicamentos/'
-        : 'https://consultas.anvisa.gov.br/api/consulta/produtosHospitalares/';
-      const isNumero = /^\d{7,}$/.test(searchQuery.replace(/\D/g, '')) && searchQuery.replace(/\D/g, '').length > 6;
-      const filterKey = isNumero ? 'filter[numeroRegistro]' : 'filter[nomeProduto]';
-      const params = new URLSearchParams({ count: '20', [filterKey]: searchQuery.trim() });
-      const res = await fetch(`${endpoint}?${params}`, {
-        headers: { Accept: 'application/json', Authorization: 'Guest' },
-      });
-      if (!res.ok) throw new Error(`ANVISA retornou HTTP ${res.status}`);
+      const params = new URLSearchParams({ q: searchQuery.trim(), tipo });
+      const res = await fetch(`/api/anvisa/buscar?${params}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({})) as { erro?: string };
+        throw new Error(err.erro ?? `HTTP ${res.status}`);
+      }
       const data = await res.json() as { content?: unknown[]; data?: unknown[]; result?: unknown[] };
       const items = (data.content ?? data.data ?? data.result ?? []) as Record<string, unknown>[];
       const resultadosNorm = items.map(normalize);

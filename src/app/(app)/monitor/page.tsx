@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Radio, Search, RefreshCw, ExternalLink, Clock,
   TrendingUp, FileText, DollarSign, CheckCircle2, XCircle,
@@ -124,6 +125,7 @@ function SortIcon({ column, sortKey, sortDir }: { column: SortKey; sortKey: Sort
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function MonitorPage() {
+  const router = useRouter();
   const [data, setData] = useState<MonitorData | null>(null);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -544,14 +546,14 @@ export default function MonitorPage() {
                       <CheckCircle2 className="w-4 h-4 text-green-500" />
                       <p className="text-xs font-medium text-green-700">Checklist gerado com IA!</p>
                     </div>
-                    <Link
-                      href="/checklists"
+                    <button
+                      type="button"
                       className="text-xs font-semibold text-green-700 hover:text-green-900 flex items-center gap-1"
-                      onClick={() => setSelected(null)}
+                      onClick={() => { setSelected(null); router.push('/checklists'); }}
                     >
                       <ClipboardList className="w-3.5 h-3.5" />
                       Ver checklist
-                    </Link>
+                    </button>
                   </div>
                 )}
                 <Button
@@ -591,6 +593,7 @@ export default function MonitorPage() {
                 <Link
                   href={`/anvisa?q=${encodeURIComponent(extractKeywords(selected.objeto).join(','))}&auto=true`}
                   target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-neutral-200 text-xs font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
                   onClick={() => setSelected(null)}
                 >
