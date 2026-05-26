@@ -26,6 +26,7 @@ import {
   BarChart2,
   MapPin,
   Star,
+  Siren,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -60,6 +61,7 @@ const navItems: NavItem[] = [
   { href: "/preco-vencedor", label: "Preço IA", icon: Sparkles },
   { href: "/execucao", label: "Execução", icon: ClipboardCheck },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/sala-disputa", label: "Sala de Disputa", icon: Siren },
   { href: "/monitor", label: "Monitor", icon: Radio },
   { href: "/anvisa", label: "ANVISA", icon: ShieldCheck },
   { href: "/score-orgao", label: "Score de Órgãos", icon: Star },
