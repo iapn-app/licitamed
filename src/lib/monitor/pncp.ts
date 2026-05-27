@@ -29,7 +29,9 @@ interface PNCPContrato {
 }
 
 function toDateStr(d: Date): string {
-  return d.toISOString().slice(0, 10).replace(/-/g, '');
+  return new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' })
+    .format(d)
+    .replace(/-/g, '');
 }
 
 // Modalidades: 4=Concorrência Eletrônica, 6=Pregão Eletrônico, 7=Pregão Presencial,
