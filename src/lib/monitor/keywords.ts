@@ -1,24 +1,20 @@
 export const PALAVRAS_SAUDE = [
-  // Estabelecimentos e unidades
-  'hospitalar', 'hospital', 'ubs', 'unidade básica', 'unidade de saúde',
-  'posto de saúde', 'pronto-socorro', 'upa ', 'clínica', 'ambulatório',
-  'ambulatorial', 'hemocentro', 'maternidade',
-  // Categorias amplas
-  'saúde', 'médico', 'médica', 'médicos', 'farmácia', 'farmacêutico',
-  'enfermagem', 'diagnóstico', 'laborat', 'radiologia',
-  // Medicamentos e insumos
-  'medicamento', 'medicamentos', 'insumo hospitalar', 'insumos',
+  // Estabelecimentos
+  'hospitalar', 'hospital', 'ubs', 'unidade básica de saúde',
+  'pronto-socorro', 'clínica', 'ambulatorial', 'hemocentro',
+  // Medicamentos e insumos específicos
+  'medicamento', 'farmácia', 'farmacêutico', 'insumo hospitalar',
   'material médico', 'material hospitalar', 'equipamento médico',
-  'descartável médico', 'esterilização', 'reagente',
-  // Dispositivos e equipamentos
-  'opme', 'implante', 'prótese', 'órtese', 'ventilador', 'desfibrilador',
-  'cateter', 'seringa', 'luva', 'gaze', 'curativo', 'bandagem',
-  'bisturi', 'dreno', 'equipo', 'agulha', 'fio cirúrgico',
-  'imagem médica', 'oxigênio', 'vacina',
-  // Especialidades
-  'uti', 'ortopedia', 'cirúrgico', 'nutrição enteral', 'nutrição parenteral',
-  'bioquímico', 'hemoterapia', 'hemodiálise', 'oncologia', 'oncológico',
-  'pediatria', 'reabilitação',
+  'opme', 'reagente', 'esterilização',
+  // Dispositivos clínicos
+  'prótese', 'órtese', 'ventilador pulmonar', 'desfibrilador',
+  'cateter', 'bisturi', 'dreno', 'fio cirúrgico',
+  'nutrição enteral', 'nutrição parenteral',
+  // Especialidades e procedimentos
+  'cirúrgico', 'uti', 'diagnóstico', 'laboratório', 'laboratorial',
+  'radiologia', 'hemodiálise', 'hemoterapia', 'oncologia', 'oncológico',
+  'reabilitação', 'vacina', 'enfermagem', 'odontológico', 'ortopédico',
+  'saúde pública',
 ];
 
 export function temPalavraChave(texto: string): boolean {

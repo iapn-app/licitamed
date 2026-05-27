@@ -103,6 +103,7 @@ export async function buscarLicitacoesPNCP(options: {
 
   const dataInicial = toDateStr(inicio);
   const dataFinal = toDateStr(now);
+  console.log('PNCP período de busca:', dataInicial, 'até', dataFinal);
 
   const resultados = await Promise.allSettled(
     MODALIDADES_PNCP.map(m => buscarModalidade(m, dataInicial, dataFinal, uf))
