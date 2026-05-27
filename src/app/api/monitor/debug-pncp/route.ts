@@ -1,14 +1,21 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 15;
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const semFiltro = searchParams.get('semFiltro') === 'true';
+
+  const fmtBrasilia = (d: Date) =>
+    new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' })
+      .format(d)
+      .replace(/-/g, '');
+
   const today = new Date();
-  const fmt = (d: Date) => d.toISOString().slice(0, 10).replace(/-/g, '');
-  const dataFinal = fmt(today);
-  const dataInicial = fmt(new Date(Date.now() - 7 * 86400000));
+  const dataFinal = fmtBrasilia(today);
+  const dataInicial = fmtBrasilia(new Date(Date.now() - 90 * 86400000));
 
   const params = new URLSearchParams({
     dataInicial,
@@ -27,28 +34,44 @@ export async function GET() {
   try {
     const res = await fetch(url, {
       headers: { Accept: 'application/json' },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(12000),
     });
 
     const status = res.status;
-    const contentType = res.headers.get('content-type') ?? '';
     const body = await res.text();
 
-    let parsed: unknown = null;
+    let parsed: { data?: Record<string, unknown>[]; totalRegistros?: number; totalPaginas?: number } | null = null;
     try { parsed = JSON.parse(body); } catch { /* não é JSON */ }
 
-    const firstItem = (parsed && typeof parsed === 'object' && 'data' in (parsed as object))
-      ? (parsed as { data: unknown[] }).data?.[0]
-      : null;
+    const items = parsed?.data ?? [];
+
+    if (semFiltro) {
+      return NextResponse.json({
+        url,
+        httpStatus: status,
+        periodo: { dataInicial, dataFinal },
+        totalRegistros: parsed?.totalRegistros ?? 0,
+        totalPaginas: parsed?.totalPaginas ?? 0,
+        itensBrutos: items.slice(0, 5).map(item => ({
+          numeroControlePNCP: item.numeroControlePNCP,
+          objetoCompra: item.objetoCompra,
+          modalidadeNome: item.modalidadeNome,
+          dataPublicacaoPncp: item.dataPublicacaoPncp,
+          orgao: (item.unidadeOrgao as Record<string, unknown>)?.nomeUnidade ?? (item.orgaoEntidade as Record<string, unknown>)?.razaoSocial,
+          municipio: (item.unidadeOrgao as Record<string, unknown>)?.municipioNome,
+        })),
+      });
+    }
+
+    const firstItem = items[0] ?? null;
 
     return NextResponse.json({
       url,
       httpStatus: status,
-      contentType,
-      bodySlice: body.slice(0, 500),
-      parsed: !!parsed,
-      topLevelKeys: parsed && typeof parsed === 'object' ? Object.keys(parsed as object) : null,
-      firstItemKeys: firstItem && typeof firstItem === 'object' ? Object.keys(firstItem as object) : null,
+      periodo: { dataInicial, dataFinal },
+      totalRegistros: parsed?.totalRegistros ?? 0,
+      topLevelKeys: parsed ? Object.keys(parsed) : null,
+      firstItemKeys: firstItem ? Object.keys(firstItem) : null,
       firstItem,
     });
   } catch (e) {
