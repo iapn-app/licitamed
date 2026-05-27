@@ -26,10 +26,10 @@ export async function GET(req: NextRequest) {
     uf: 'RJ',
   });
 
-  const proxyUrl = process.env.PNCP_PROXY_URL;
-  const url = proxyUrl
-    ? `${proxyUrl}/?${params}`
-    : `https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao?${params}`;
+  const baseUrl = process.env.PNCP_PROXY_URL?.trim() || 'https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao';
+  const urlObj = new URL(baseUrl);
+  params.forEach((value, key) => urlObj.searchParams.set(key, value));
+  const url = urlObj.toString();
 
   try {
     const res = await fetch(url, {

@@ -58,7 +58,7 @@ function mapPNCPItem(item: PNCPItem, uf: string): LicitacaoMonitor {
   };
 }
 
-const PNCP_BASE_URL = process.env.PNCP_PROXY_URL?.trim() || 'https://pncp.gov.br';
+const PNCP_BASE_URL = process.env.PNCP_PROXY_URL?.trim() || 'https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao';
 console.log('PNCP_BASE_URL:', PNCP_BASE_URL);
 
 async function buscarModalidade(modalidade: number, dataInicial: string, dataFinal: string, uf: string): Promise<LicitacaoMonitor[]> {
@@ -70,12 +70,11 @@ async function buscarModalidade(modalidade: number, dataInicial: string, dataFin
   });
   if (uf) params.set('uf', uf);
 
-  const viaProxy = !!process.env.PNCP_PROXY_URL;
-  const url = viaProxy
-    ? `${PNCP_BASE_URL}/?${params}`
-    : `${PNCP_BASE_URL}/api/consulta/v1/contratacoes/publicacao?${params}`;
+  const urlObj = new URL(PNCP_BASE_URL);
+  params.forEach((value, key) => urlObj.searchParams.set(key, value));
+  const url = urlObj.toString();
 
-  console.log(`PNCP: modalidade=${modalidade} via ${viaProxy ? 'proxy' : 'direto'}...`);
+  console.log(`PNCP: modalidade=${modalidade} via ${process.env.PNCP_PROXY_URL ? 'proxy' : 'direto'}...`);
 
   const res = await fetch(url, {
     headers: { Accept: 'application/json' },
