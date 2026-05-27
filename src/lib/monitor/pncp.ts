@@ -34,17 +34,17 @@ function toDateStr(d: Date): string {
 
 export async function buscarLicitacoesPNCP(options: {
   diasPassados?: number;
-  diasFuturos?: number;
   uf?: string;
   paginas?: number;
+  filtrarKeywords?: boolean;
 }): Promise<LicitacaoMonitor[]> {
-  const { diasPassados = 30, diasFuturos = 60, uf = 'RJ', paginas = 5 } = options;
+  // diasFuturos removed — PNCP /publicacoes uses publication date (never future)
+  const { diasPassados = 60, uf = 'RJ', paginas = 5, filtrarKeywords = false } = options;
   const now = new Date();
   const inicio = new Date(now); inicio.setDate(now.getDate() - diasPassados);
-  const fim = new Date(now); fim.setDate(now.getDate() + diasFuturos);
 
   const dataInicial = toDateStr(inicio);
-  const dataFinal = toDateStr(fim);
+  const dataFinal = toDateStr(now);
   const resultado: LicitacaoMonitor[] = [];
   const seen = new Set<string>();
 
@@ -76,7 +76,7 @@ export async function buscarLicitacoesPNCP(options: {
 
       for (const item of items) {
         const objeto = item.objetoCompra ?? '';
-        if (!temPalavraChave(objeto)) continue;
+        if (filtrarKeywords && !temPalavraChave(objeto)) continue;
         const id = item.numeroControlePNCP ?? `pncp-${Date.now()}-${Math.random()}`;
         if (seen.has(id)) continue;
         seen.add(id);
@@ -106,7 +106,7 @@ export async function buscarLicitacoesPNCP(options: {
     }
   }
 
-  console.log(`PNCP: total encontrado após filtro = ${resultado.length}`);
+  console.log(`PNCP: total encontrado = ${resultado.length}`);
   return resultado;
 }
 

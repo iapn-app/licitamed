@@ -36,6 +36,24 @@ function isPowerMed(titulo: string, conteudo: string): boolean {
   return POWER_MED_TERMOS.some(t => texto.includes(t.toLowerCase()));
 }
 
+async function getInlabsSession(): Promise<string | null> {
+  const email = process.env.INLABS_EMAIL;
+  const password = process.env.INLABS_PASSWORD;
+  if (!email || !password) return null;
+
+  const res = await fetch('https://inlabs.in.gov.br/logar.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ email, password }).toString(),
+    redirect: 'manual',
+    signal: AbortSignal.timeout(10000),
+  });
+
+  const setCookie = res.headers.get('set-cookie') ?? '';
+  const match = setCookie.match(/PHPSESSID=([^;]+)/);
+  return match?.[1] ?? null;
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const q = (searchParams.get('q') ?? 'hospitalar').trim();
@@ -50,15 +68,35 @@ export async function GET(request: NextRequest) {
     q,
     dtInicio: toDDMMYYYY(dtInicio),
     dtFim: toDDMMYYYY(dtFim),
+    maximoResultados: '20',
   });
   if (secao !== 'todas') params.set('s', secao);
 
-  const url = `https://www.in.gov.br/acesso-a-informacao/dados-abertos/api/v3/busca?${params}`;
-  console.log('DOU: buscando...', url);
+  // INLABS requires authentication — try session auth if credentials are configured
+  const sessionId = await getInlabsSession().catch(() => null);
+  if (!sessionId) {
+    const hasCredentials = !!(process.env.INLABS_EMAIL && process.env.INLABS_PASSWORD);
+    console.log('DOU: INLABS sem sessão ativa', hasCredentials ? '(credenciais inválidas)' : '(credenciais não configuradas — adicionar INLABS_EMAIL e INLABS_PASSWORD na Vercel)');
+    return NextResponse.json({
+      publicacoes: [],
+      total: 0,
+      erro: hasCredentials
+        ? 'Falha ao autenticar no INLABS — verifique INLABS_EMAIL e INLABS_PASSWORD'
+        : 'API do DOU requer cadastro gratuito em inlabs.in.gov.br. Configure INLABS_EMAIL e INLABS_PASSWORD na Vercel.',
+      inlabsConfigured: hasCredentials,
+    });
+  }
+
+  const url = `https://inlabs.in.gov.br/acesso-a-informacao/dados-abertos/api/v3/busca?${params}`;
+  console.log('DOU (INLABS): buscando...', url);
 
   try {
     const res = await fetch(url, {
-      headers: { Accept: 'application/json', 'User-Agent': 'Mozilla/5.0' },
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'Mozilla/5.0',
+        Cookie: `PHPSESSID=${sessionId}`,
+      },
       signal: AbortSignal.timeout(15000),
     });
 

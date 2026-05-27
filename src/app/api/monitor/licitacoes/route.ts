@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { buscarLicitacoesPNCP } from '@/lib/monitor/pncp';
-import { scrapeComprasRio, scrapeSeplagRJ, scrapeBLL } from '@/lib/monitor/scrapers';
+import { scrapeComprasRio, scrapeSeplagRJ, scrapeBLL, scrapeLicitacoesE } from '@/lib/monitor/scrapers';
+import { temPalavraChave } from '@/lib/monitor/keywords';
 import type { LicitacaoMonitor, StatusFonte } from '@/lib/monitor/types';
 
 export const runtime = 'nodejs';
@@ -101,11 +102,12 @@ export async function GET(req: NextRequest) {
 
   console.log('Monitor licitacoes: iniciando busca', { uf, keyword, fonte });
 
-  const [pncpResult, comprasrioResult, seplagResult, bllResult] = await Promise.allSettled([
-    buscarLicitacoesPNCP({ uf, paginas: 3 }),
+  const [pncpResult, comprasrioResult, seplagResult, bllResult, licitacoesEResult] = await Promise.allSettled([
+    buscarLicitacoesPNCP({ uf, paginas: 5, diasPassados: 60, filtrarKeywords: false }),
     scrapeComprasRio(),
     scrapeSeplagRJ(),
     scrapeBLL(),
+    scrapeLicitacoesE(),
   ]);
 
   const fontes: StatusFonte[] = [];
@@ -125,6 +127,7 @@ export async function GET(req: NextRequest) {
     [comprasrioResult, 'ComprasRio'],
     [seplagResult, 'SEPLAG-RJ'],
     [bllResult, 'BLL'],
+    [licitacoesEResult, 'BLL'],
   ] as const) {
     if (result.status === 'fulfilled') {
       dados = dados.concat(result.value.dados);
@@ -141,6 +144,11 @@ export async function GET(req: NextRequest) {
     console.log('Monitor: todas as fontes falharam — usando dados de exemplo');
     dados = SEED_LICITACOES;
     fontes.forEach(f => { f.erro = f.erro ?? 'Indisponível temporariamente'; });
+  }
+
+  // Filter by health keywords (PNCP brings all RJ — filter here)
+  if (algumaFonteAtiva) {
+    dados = dados.filter(d => temPalavraChave(d.objeto));
   }
 
   // Deduplicate by id
