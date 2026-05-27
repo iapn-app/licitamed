@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
   console.log('Monitor licitacoes: iniciando busca', { uf, keyword, fonte });
 
   const [pncpResult, licitacoesEResult] = await Promise.allSettled([
-    buscarLicitacoesPNCP({ uf, paginas: 5, diasPassados: 60, filtrarKeywords: false }),
+    buscarLicitacoesPNCP({ uf, paginas: 5, diasPassados: 90, filtrarKeywords: false }),
     scrapeLicitacoesE(),
   ]);
 

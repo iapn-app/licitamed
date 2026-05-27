@@ -32,9 +32,9 @@ function toDateStr(d: Date): string {
   return d.toISOString().slice(0, 10).replace(/-/g, '');
 }
 
-// Modalidades mais relevantes para saúde pública
-// 6=Pregão Eletrônico, 4=Concorrência Eletrônica, 8=Dispensa, 9=Inexigibilidade
-const MODALIDADES_PNCP = [6, 4, 8];
+// Modalidades: 4=Concorrência Eletrônica, 6=Pregão Eletrônico, 7=Pregão Presencial,
+// 8=Dispensa, 9=Inexigibilidade, 13=Credenciamento
+const MODALIDADES_PNCP = [4, 6, 7, 8, 9, 13];
 
 export async function buscarLicitacoesPNCP(options: {
   diasPassados?: number;
@@ -42,7 +42,7 @@ export async function buscarLicitacoesPNCP(options: {
   paginas?: number;
   filtrarKeywords?: boolean;
 }): Promise<LicitacaoMonitor[]> {
-  const { diasPassados = 60, uf = 'RJ', paginas = 3, filtrarKeywords = false } = options;
+  const { diasPassados = 90, uf = 'RJ', paginas = 3, filtrarKeywords = false } = options;
   const now = new Date();
   const inicio = new Date(now); inicio.setDate(now.getDate() - diasPassados);
 
