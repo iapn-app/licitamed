@@ -136,7 +136,6 @@ export default function AnvisaPage() {
       if (data.fallback) {
         setState('done');
         setResultados([]);
-        if (data.officialUrl) window.open(data.officialUrl, '_blank', 'noopener,noreferrer');
         return;
       }
 
@@ -289,25 +288,33 @@ export default function AnvisaPage() {
         </div>
       )}
 
-      {/* Fallback — ANVISA bloqueou, site oficial foi aberto */}
+      {/* Fallback — ANVISA bloqueou consultas automáticas */}
       {state === 'done' && resultados.length === 0 && officialUrl && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 flex flex-col items-center text-center gap-3">
-          <ShieldCheck className="w-10 h-10 text-[#06B6D4]" />
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex flex-col items-center text-center gap-4">
+          <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+            <ShieldCheck className="w-6 h-6 text-amber-600" />
+          </div>
           <div>
-            <p className="text-sm font-semibold text-neutral-800">Consulta aberta no site oficial da ANVISA</p>
-            <p className="text-xs text-neutral-500 mt-1">
-              A API de dados abertos não retornou resultados. O portal oficial foi aberto automaticamente em nova aba.
+            <p className="text-sm font-semibold text-neutral-800">
+              A ANVISA protege sua API contra consultas automatizadas.
+            </p>
+            <p className="text-xs text-neutral-500 mt-1 max-w-sm mx-auto">
+              Não foi possível buscar os dados diretamente. Use o botão abaixo para consultar no portal oficial — o produto já estará preenchido automaticamente.
             </p>
           </div>
           <a
             href={officialUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#06B6D4] text-white text-sm font-medium hover:bg-[#0891B2] transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-[#06B6D4] text-white text-sm font-semibold hover:bg-[#0891B2] transition-colors shadow-sm"
           >
+            <Search className="w-4 h-4" />
+            Consultar {query.trim() ? `"${query.trim()}"` : 'produto'} na ANVISA oficial
             <ArrowUpRight className="w-4 h-4" />
-            Abrir site oficial da ANVISA
           </a>
+          <p className="text-[11px] text-neutral-400">
+            Ao abrir, o produto já estará buscado automaticamente
+          </p>
         </div>
       )}
 
