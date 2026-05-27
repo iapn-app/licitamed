@@ -21,7 +21,7 @@ export async function GET() {
 
   const proxyUrl = process.env.PNCP_PROXY_URL;
   const url = proxyUrl
-    ? `${proxyUrl}?${params}`
+    ? `${proxyUrl}/?${params}`
     : `https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao?${params}`;
 
   try {

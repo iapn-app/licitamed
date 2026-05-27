@@ -69,7 +69,7 @@ async function buscarModalidade(modalidade: number, dataInicial: string, dataFin
 
   const viaProxy = !!process.env.PNCP_PROXY_URL;
   const url = viaProxy
-    ? `${PNCP_BASE_URL}?${params}`
+    ? `${PNCP_BASE_URL}/?${params}`
     : `${PNCP_BASE_URL}/api/consulta/v1/contratacoes/publicacao?${params}`;
 
   console.log(`PNCP: modalidade=${modalidade} via ${viaProxy ? 'proxy' : 'direto'}...`);
