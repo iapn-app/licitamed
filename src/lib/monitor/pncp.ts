@@ -32,14 +32,17 @@ function toDateStr(d: Date): string {
   return d.toISOString().slice(0, 10).replace(/-/g, '');
 }
 
+// Modalidades mais relevantes para saúde pública
+// 6=Pregão Eletrônico, 4=Concorrência Eletrônica, 8=Dispensa, 9=Inexigibilidade
+const MODALIDADES_PNCP = [6, 4, 8];
+
 export async function buscarLicitacoesPNCP(options: {
   diasPassados?: number;
   uf?: string;
   paginas?: number;
   filtrarKeywords?: boolean;
 }): Promise<LicitacaoMonitor[]> {
-  // diasFuturos removed — PNCP /publicacoes uses publication date (never future)
-  const { diasPassados = 60, uf = 'RJ', paginas = 5, filtrarKeywords = false } = options;
+  const { diasPassados = 60, uf = 'RJ', paginas = 3, filtrarKeywords = false } = options;
   const now = new Date();
   const inicio = new Date(now); inicio.setDate(now.getDate() - diasPassados);
 
@@ -48,61 +51,64 @@ export async function buscarLicitacoesPNCP(options: {
   const resultado: LicitacaoMonitor[] = [];
   const seen = new Set<string>();
 
-  for (let pagina = 1; pagina <= paginas; pagina++) {
-    try {
-      const params = new URLSearchParams({
-        dataInicial, dataFinal,
-        pagina: String(pagina),
-        tamanhoPagina: '50',
-      });
-      if (uf) params.set('uf', uf);
+  for (const modalidade of MODALIDADES_PNCP) {
+    for (let pagina = 1; pagina <= paginas; pagina++) {
+      try {
+        const params = new URLSearchParams({
+          dataInicial, dataFinal,
+          pagina: String(pagina),
+          tamanhoPagina: '50',
+          codigoModalidadeContratacao: String(modalidade),
+        });
+        if (uf) params.set('uf', uf);
 
-      const url = `https://pncp.gov.br/api/pncp/v1/contratacoes/publicacoes?${params}`;
-      console.log(`PNCP: buscando página ${pagina}...`, url);
+        const url = `https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao?${params}`;
+        console.log(`PNCP: buscando modalidade=${modalidade} página=${pagina}...`, url);
 
-      const res = await fetch(url, {
-        headers: { Accept: 'application/json' },
-        signal: AbortSignal.timeout(15000),
-      });
-      if (!res.ok) {
-        console.log(`PNCP: HTTP ${res.status} na página ${pagina}`);
+        const res = await fetch(url, {
+          headers: { Accept: 'application/json' },
+          signal: AbortSignal.timeout(15000),
+        });
+        if (!res.ok) {
+          console.log(`PNCP: HTTP ${res.status} modalidade=${modalidade} página=${pagina}`);
+          break;
+        }
+
+        const json = await res.json() as { data?: PNCPItem[]; totalPaginas?: number };
+        const items = json.data ?? [];
+        console.log(`PNCP: modalidade=${modalidade} página=${pagina} → ${items.length} itens`);
+        if (items.length === 0) break;
+
+        for (const item of items) {
+          const objeto = item.objetoCompra ?? '';
+          if (filtrarKeywords && !temPalavraChave(objeto)) continue;
+          const id = item.numeroControlePNCP ?? `pncp-${Date.now()}-${Math.random()}`;
+          if (seen.has(id)) continue;
+          seen.add(id);
+
+          resultado.push({
+            id,
+            fonte: 'PNCP',
+            orgao: item.unidadeOrgao?.nomeUnidade ?? item.orgaoEntidade?.razaoSocial ?? 'Órgão não informado',
+            cnpjOrgao: item.orgaoEntidade?.cnpj,
+            objeto,
+            modalidade: item.modalidadeNome ?? 'Não informada',
+            valorEstimado: item.valorTotalEstimado ?? null,
+            dataPublicacao: item.dataPublicacaoPncp?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
+            dataAbertura: item.dataAberturaProposta?.slice(0, 10) ?? null,
+            status: 'ativa',
+            urlEdital: item.linkSistemaOrigem ?? null,
+            municipio: item.unidadeOrgao?.municipioNome ?? null,
+            uf: item.unidadeOrgao?.ufSigla ?? uf,
+            palavrasEncontradas: encontrarPalavras(objeto),
+          });
+        }
+
+        if (pagina >= (json.totalPaginas ?? paginas)) break;
+      } catch (e) {
+        console.log('PNCP: erro na paginação', String(e));
         break;
       }
-
-      const json = await res.json() as { data?: PNCPItem[]; totalPaginas?: number };
-      const items = json.data ?? [];
-      console.log(`PNCP: página ${pagina} → ${items.length} itens`);
-      if (items.length === 0) break;
-
-      for (const item of items) {
-        const objeto = item.objetoCompra ?? '';
-        if (filtrarKeywords && !temPalavraChave(objeto)) continue;
-        const id = item.numeroControlePNCP ?? `pncp-${Date.now()}-${Math.random()}`;
-        if (seen.has(id)) continue;
-        seen.add(id);
-
-        resultado.push({
-          id,
-          fonte: 'PNCP',
-          orgao: item.unidadeOrgao?.nomeUnidade ?? item.orgaoEntidade?.razaoSocial ?? 'Órgão não informado',
-          cnpjOrgao: item.orgaoEntidade?.cnpj,
-          objeto,
-          modalidade: item.modalidadeNome ?? 'Não informada',
-          valorEstimado: item.valorTotalEstimado ?? null,
-          dataPublicacao: item.dataPublicacaoPncp?.slice(0, 10) ?? new Date().toISOString().slice(0, 10),
-          dataAbertura: item.dataAberturaProposta?.slice(0, 10) ?? null,
-          status: 'ativa',
-          urlEdital: item.linkSistemaOrigem ?? null,
-          municipio: item.unidadeOrgao?.municipioNome ?? null,
-          uf: item.unidadeOrgao?.ufSigla ?? uf,
-          palavrasEncontradas: encontrarPalavras(objeto),
-        });
-      }
-
-      if (pagina >= (json.totalPaginas ?? paginas)) break;
-    } catch (e) {
-      console.log('PNCP: erro na paginação', String(e));
-      break;
     }
   }
 
