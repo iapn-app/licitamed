@@ -81,6 +81,14 @@ async function buscarModalidade(modalidade: number, dataInicial: string, dataFin
   const json = await res.json() as { data?: PNCPItem[] };
   const items = json.data ?? [];
   console.log(`PNCP: modalidade=${modalidade} → ${items.length} itens`);
+  // DEBUG: log raw keys and sample objeto field from first item
+  if (items.length > 0) {
+    const sample = items[0] as Record<string, unknown>;
+    console.log(`PNCP DEBUG modalidade=${modalidade} keys:`, Object.keys(sample).join(', '));
+    console.log(`PNCP DEBUG objetoCompra:`, String(sample.objetoCompra ?? '(vazio)').slice(0, 200));
+    console.log(`PNCP DEBUG objeto:`, String(sample.objeto ?? '(vazio)').slice(0, 200));
+    console.log(`PNCP DEBUG descricao:`, String(sample.descricao ?? '(vazio)').slice(0, 200));
+  }
   return items.map(item => mapPNCPItem(item, uf));
 }
 
