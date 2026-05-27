@@ -1,4 +1,4 @@
-export type FonteMonitor = 'PNCP' | 'ComprasRio' | 'SEPLAG-RJ' | 'BLL' | 'LicitacoesE';
+export type FonteMonitor = 'PNCP' | 'LicitacoesE';
 
 export interface LicitacaoMonitor {
   id: string;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { buscarLicitacoesPNCP } from '@/lib/monitor/pncp';
-import { scrapeComprasRio, scrapeSeplagRJ, scrapeBLL, scrapeLicitacoesE } from '@/lib/monitor/scrapers';
+import { scrapeLicitacoesE } from '@/lib/monitor/scrapers';
 import { temPalavraChave } from '@/lib/monitor/keywords';
 import type { LicitacaoMonitor, StatusFonte } from '@/lib/monitor/types';
 
@@ -19,11 +19,8 @@ export async function GET(req: NextRequest) {
 
   console.log('Monitor licitacoes: iniciando busca', { uf, keyword, fonte });
 
-  const [pncpResult, comprasrioResult, seplagResult, bllResult, licitacoesEResult] = await Promise.allSettled([
+  const [pncpResult, licitacoesEResult] = await Promise.allSettled([
     buscarLicitacoesPNCP({ uf, paginas: 5, diasPassados: 60, filtrarKeywords: false }),
-    scrapeComprasRio(),
-    scrapeSeplagRJ(),
-    scrapeBLL(),
     scrapeLicitacoesE(),
   ]);
 
@@ -40,20 +37,13 @@ export async function GET(req: NextRequest) {
     fontes.push({ fonte: 'PNCP', ativa: false, erro: String(pncpResult.reason), ultimaVerificacao: new Date().toISOString() });
   }
 
-  for (const [result, fonteId] of [
-    [comprasrioResult, 'ComprasRio'],
-    [seplagResult, 'SEPLAG-RJ'],
-    [bllResult, 'BLL'],
-    [licitacoesEResult, 'BLL'],
-  ] as const) {
-    if (result.status === 'fulfilled') {
-      dados = dados.concat(result.value.dados);
-      fontes.push(result.value.status);
-      if (result.value.dados.length > 0) algumaFonteAtiva = true;
-    } else {
-      console.log(`${fonteId}: falhou`, String(result.reason));
-      fontes.push({ fonte: fonteId as StatusFonte['fonte'], ativa: false, erro: String(result.reason), ultimaVerificacao: new Date().toISOString() });
-    }
+  if (licitacoesEResult.status === 'fulfilled') {
+    dados = dados.concat(licitacoesEResult.value.dados);
+    fontes.push({ ...licitacoesEResult.value.status, fonte: 'LicitacoesE' });
+    if (licitacoesEResult.value.dados.length > 0) algumaFonteAtiva = true;
+  } else {
+    console.log('LicitacoesE: falhou', String(licitacoesEResult.reason));
+    fontes.push({ fonte: 'LicitacoesE', ativa: false, erro: String(licitacoesEResult.reason), ultimaVerificacao: new Date().toISOString() });
   }
 
   if (!algumaFonteAtiva) {

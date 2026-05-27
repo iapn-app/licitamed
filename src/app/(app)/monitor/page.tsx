@@ -39,9 +39,6 @@ type SortDir = 'asc' | 'desc';
 
 const FONTE_COLORS: Record<string, string> = {
   PNCP: 'bg-blue-50 text-blue-700 border-blue-200',
-  ComprasRio: 'bg-orange-50 text-orange-700 border-orange-200',
-  'SEPLAG-RJ': 'bg-green-50 text-green-700 border-green-200',
-  BLL: 'bg-purple-50 text-purple-700 border-purple-200',
   LicitacoesE: 'bg-yellow-50 text-yellow-700 border-yellow-200',
 };
 
@@ -223,7 +220,7 @@ export default function MonitorPage() {
             <h1 className="text-xl font-semibold text-neutral-900">Monitor de Licitações — RJ</h1>
           </div>
           <p className="text-sm text-neutral-500">
-            Editais hospitalares de 5 fontes: PNCP · ComprasRio · SEPLAG-RJ · BLL
+            PNCP — Portal Nacional de Contratações Públicas
           </p>
         </div>
         <Button
@@ -258,7 +255,7 @@ export default function MonitorPage() {
         />
         <StatCard
           icon={DollarSign} color="bg-purple-50" iconColor="text-purple-600"
-          label="Fontes ativas" value={loaded ? `${data?.fontesAtivas ?? 0}/4` : '—'}
+          label="Fontes ativas" value={loaded ? `${data?.fontesAtivas ?? 0}/2` : '—'}
           desc="APIs respondendo"
         />
       </div>
@@ -316,9 +313,8 @@ export default function MonitorPage() {
             <SelectTrigger><SelectValue placeholder="Fonte" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as fontes</SelectItem>
-              {['PNCP', 'ComprasRio', 'SEPLAG-RJ', 'BLL'].map(f => (
-                <SelectItem key={f} value={f}>{f}</SelectItem>
-              ))}
+              <SelectItem value="PNCP">PNCP</SelectItem>
+              <SelectItem value="LicitacoesE">Licitações-e (BB)</SelectItem>
             </SelectContent>
           </Select>
           <Select value={modalidade || 'all'} onValueChange={v => setModalidade(v === 'all' ? '' : v)}>
