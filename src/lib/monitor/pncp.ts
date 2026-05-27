@@ -56,6 +56,8 @@ function mapPNCPItem(item: PNCPItem, uf: string): LicitacaoMonitor {
   };
 }
 
+const PNCP_BASE_URL = process.env.PNCP_PROXY_URL ?? 'https://pncp.gov.br';
+
 async function buscarModalidade(modalidade: number, dataInicial: string, dataFinal: string, uf: string): Promise<LicitacaoMonitor[]> {
   const params = new URLSearchParams({
     dataInicial, dataFinal,
@@ -65,12 +67,16 @@ async function buscarModalidade(modalidade: number, dataInicial: string, dataFin
   });
   if (uf) params.set('uf', uf);
 
-  const url = `https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao?${params}`;
-  console.log(`PNCP: buscando modalidade=${modalidade}...`);
+  const viaProxy = !!process.env.PNCP_PROXY_URL;
+  const url = viaProxy
+    ? `${PNCP_BASE_URL}?${params}`
+    : `${PNCP_BASE_URL}/api/consulta/v1/contratacoes/publicacao?${params}`;
+
+  console.log(`PNCP: modalidade=${modalidade} via ${viaProxy ? 'proxy' : 'direto'}...`);
 
   const res = await fetch(url, {
     headers: { Accept: 'application/json' },
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(viaProxy ? 25000 : 8000),
   });
 
   if (!res.ok) {
@@ -81,14 +87,6 @@ async function buscarModalidade(modalidade: number, dataInicial: string, dataFin
   const json = await res.json() as { data?: PNCPItem[] };
   const items = json.data ?? [];
   console.log(`PNCP: modalidade=${modalidade} → ${items.length} itens`);
-  // DEBUG: log raw keys and sample objeto field from first item
-  if (items.length > 0) {
-    const sample = items[0] as Record<string, unknown>;
-    console.log(`PNCP DEBUG modalidade=${modalidade} keys:`, Object.keys(sample).join(', '));
-    console.log(`PNCP DEBUG objetoCompra:`, String(sample.objetoCompra ?? '(vazio)').slice(0, 200));
-    console.log(`PNCP DEBUG objeto:`, String(sample.objeto ?? '(vazio)').slice(0, 200));
-    console.log(`PNCP DEBUG descricao:`, String(sample.descricao ?? '(vazio)').slice(0, 200));
-  }
   return items.map(item => mapPNCPItem(item, uf));
 }
 

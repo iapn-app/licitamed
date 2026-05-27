@@ -53,12 +53,7 @@ export async function GET(req: NextRequest) {
 
   // Filter by health keywords (PNCP brings all RJ — filter here)
   if (algumaFonteAtiva) {
-    const antesDoFiltro = dados.length;
-    const exemplos = dados.slice(0, 3).map(d => `"${d.objeto.slice(0, 80)}"`);
-    console.log(`DEBUG antes do filtro keywords: ${antesDoFiltro} itens`);
-    console.log(`DEBUG exemplos de objeto:`, exemplos);
     dados = dados.filter(d => temPalavraChave(d.objeto));
-    console.log(`DEBUG após filtro keywords: ${dados.length} itens (removidos: ${antesDoFiltro - dados.length})`);
   }
 
   // Deduplicate by id
