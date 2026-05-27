@@ -78,7 +78,7 @@ async function buscarModalidade(modalidade: number, dataInicial: string, dataFin
 
   const res = await fetch(url, {
     headers: { Accept: 'application/json' },
-    signal: AbortSignal.timeout(viaProxy ? 25000 : 8000),
+    signal: AbortSignal.timeout(process.env.PNCP_PROXY_URL ? 25000 : 8000),
   });
 
   if (!res.ok) {
