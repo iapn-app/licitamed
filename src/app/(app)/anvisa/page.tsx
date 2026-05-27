@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
   ShieldCheck, Search, AlertTriangle, CheckCircle2,
-  XCircle, Download, ExternalLink, ChevronUp, ChevronDown, Info,
+  XCircle, Download, ExternalLink, ChevronUp, ChevronDown, Info, ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -111,6 +111,7 @@ export default function AnvisaPage() {
   const [resultados, setResultados] = useState<ANVISAItem[]>([]);
   const [errorMsg, setErrorMsg] = useState('');
   const [selected, setSelected] = useState<ANVISAItem | null>(null);
+  const [officialUrl, setOfficialUrl] = useState<string | null>(null);
 
   const autoFiredRef = useRef(false);
 
@@ -119,15 +120,29 @@ export default function AnvisaPage() {
     if (!searchQuery.trim()) { toast.error('Digite um nome de produto ou número de registro'); return; }
     setState('loading');
     setResultados([]);
+    setOfficialUrl(null);
     try {
       const params = new URLSearchParams({ q: searchQuery.trim(), tipo });
       const res = await fetch(`/api/anvisa/buscar?${params}`);
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({})) as { erro?: string };
-        throw new Error(err.erro ?? `HTTP ${res.status}`);
+      const data = await res.json() as {
+        content?: unknown[];
+        fallback?: boolean;
+        officialUrl?: string;
+        erro?: string;
+      };
+
+      if (data.officialUrl) setOfficialUrl(data.officialUrl);
+
+      if (data.fallback) {
+        setState('done');
+        setResultados([]);
+        if (data.officialUrl) window.open(data.officialUrl, '_blank', 'noopener,noreferrer');
+        return;
       }
-      const data = await res.json() as { content?: unknown[]; data?: unknown[]; result?: unknown[] };
-      const items = (data.content ?? data.data ?? data.result ?? []) as Record<string, unknown>[];
+
+      if (!res.ok || data.erro) throw new Error(data.erro ?? `HTTP ${res.status}`);
+
+      const items = (data.content ?? []) as Record<string, unknown>[];
       const resultadosNorm = items.map(normalize);
       setResultados(resultadosNorm);
       setState('done');
@@ -242,6 +257,17 @@ export default function AnvisaPage() {
               <SelectItem value="vencido">Vencidos / Cancelados</SelectItem>
             </SelectContent>
           </Select>
+              {officialUrl && (
+            <a
+              href={officialUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-[#06B6D4] text-xs font-medium text-[#06B6D4] hover:bg-[#ECFEFF] transition-colors"
+            >
+              <ArrowUpRight className="w-3.5 h-3.5" />
+              Consultar no site oficial da ANVISA
+            </a>
+          )}
           {state === 'done' && filtered.length > 0 && (
             <Button variant="outline" size="sm" className="gap-2 ml-auto" onClick={() => exportCSV(filtered)}>
               <Download className="w-4 h-4" />
@@ -260,6 +286,28 @@ export default function AnvisaPage() {
             <p className="text-xs text-red-500 mt-0.5">{errorMsg}</p>
             <Button variant="outline" size="sm" className="mt-2" onClick={() => buscar()}>Tentar novamente</Button>
           </div>
+        </div>
+      )}
+
+      {/* Fallback — ANVISA bloqueou, site oficial foi aberto */}
+      {state === 'done' && resultados.length === 0 && officialUrl && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 flex flex-col items-center text-center gap-3">
+          <ShieldCheck className="w-10 h-10 text-[#06B6D4]" />
+          <div>
+            <p className="text-sm font-semibold text-neutral-800">Consulta aberta no site oficial da ANVISA</p>
+            <p className="text-xs text-neutral-500 mt-1">
+              A API de dados abertos não retornou resultados. O portal oficial foi aberto automaticamente em nova aba.
+            </p>
+          </div>
+          <a
+            href={officialUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#06B6D4] text-white text-sm font-medium hover:bg-[#0891B2] transition-colors"
+          >
+            <ArrowUpRight className="w-4 h-4" />
+            Abrir site oficial da ANVISA
+          </a>
         </div>
       )}
 
