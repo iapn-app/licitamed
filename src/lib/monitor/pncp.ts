@@ -56,7 +56,8 @@ function mapPNCPItem(item: PNCPItem, uf: string): LicitacaoMonitor {
   };
 }
 
-const PNCP_BASE_URL = process.env.PNCP_PROXY_URL ?? 'https://pncp.gov.br';
+const PNCP_BASE_URL = process.env.PNCP_PROXY_URL?.trim() || 'https://pncp.gov.br';
+console.log('PNCP_BASE_URL:', PNCP_BASE_URL);
 
 async function buscarModalidade(modalidade: number, dataInicial: string, dataFinal: string, uf: string): Promise<LicitacaoMonitor[]> {
   const params = new URLSearchParams({
