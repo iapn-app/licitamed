@@ -2,7 +2,6 @@ import { temPalavraChave, encontrarPalavras } from './keywords';
 import type { LicitacaoMonitor, StatusFonte } from './types';
 
 function today(): string { return new Date().toISOString().slice(0, 10); }
-function toDateStr(d: Date): string { return d.toISOString().slice(0, 10).replace(/-/g, ''); }
 
 async function safeFetch(url: string, opts?: RequestInit): Promise<Response | null> {
   try {
