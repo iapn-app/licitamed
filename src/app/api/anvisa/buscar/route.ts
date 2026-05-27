@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
   const primeiroTermo = termos[0] ?? q.trim();
   const officialUrl = tipo === 'medicamento'
     ? `https://consultas.anvisa.gov.br/#/medicamentos/?nomeProduto=${encodeURIComponent(primeiroTermo)}`
-    : `https://consultas.anvisa.gov.br/#/produtosHospitalares/?nomeProduto=${encodeURIComponent(primeiroTermo)}`;
+    : `https://consultas.anvisa.gov.br/#/produtossaude/?nomeProduto=${encodeURIComponent(primeiroTermo)}`;
 
   // First: Cloudflare Worker proxy (if configured)
   try {

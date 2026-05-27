@@ -458,7 +458,7 @@ export default function AnvisaPage() {
                 ))}
               </dl>
               <a
-                href={`https://consultas.anvisa.gov.br/#/produtosHospitalares/${selected.numeroRegistro}`}
+                href={`https://consultas.anvisa.gov.br/#/produtossaude/${selected.numeroRegistro}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-sm text-[#06B6D4] hover:text-[#0891B2] font-medium"
