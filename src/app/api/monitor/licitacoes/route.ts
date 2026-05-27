@@ -6,7 +6,7 @@ import type { LicitacaoMonitor, StatusFonte } from '@/lib/monitor/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 45;
+export const maxDuration = 30;
 
 
 export async function GET(req: NextRequest) {
