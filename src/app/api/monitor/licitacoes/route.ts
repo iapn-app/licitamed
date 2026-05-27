@@ -75,9 +75,10 @@ export async function GET(req: NextRequest) {
   // Sort by dataPublicacao desc
   dados.sort((a, b) => b.dataPublicacao.localeCompare(a.dataPublicacao));
 
-  // Stats
-  const hoje = new Date().toISOString().slice(0, 10);
-  const trintaDiasAtras = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  // Stats — usar horário de Brasília para evitar mismatch com datas do PNCP
+  const fmtBrasilia = (d: Date) => new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' }).format(d);
+  const hoje = fmtBrasilia(new Date());
+  const trintaDiasAtras = fmtBrasilia(new Date(Date.now() - 30 * 86400000));
   const encontradasHoje = dados.filter(d => d.dataPublicacao === hoje).length;
   const ultimos30dias = dados.filter(d => d.dataPublicacao >= trintaDiasAtras).length;
 
