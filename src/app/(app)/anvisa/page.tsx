@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import {
   ShieldCheck, Search, AlertTriangle, CheckCircle2,
-  XCircle, Download, ExternalLink, ChevronUp, ChevronDown, Info, ArrowUpRight,
+  XCircle, Download, ExternalLink, ChevronUp, ChevronDown, Info, ArrowUpRight, Copy, Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,6 +112,7 @@ export default function AnvisaPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [selected, setSelected] = useState<ANVISAItem | null>(null);
   const [officialUrl, setOfficialUrl] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const autoFiredRef = useRef(false);
 
@@ -299,22 +300,39 @@ export default function AnvisaPage() {
               A ANVISA protege sua API contra consultas automatizadas.
             </p>
             <p className="text-xs text-neutral-500 mt-1 max-w-sm mx-auto">
-              Não foi possível buscar os dados diretamente. Use o botão abaixo para consultar no portal oficial — o produto já estará preenchido automaticamente.
+              Não foi possível buscar os dados diretamente. Acesse o portal oficial abaixo.
             </p>
           </div>
           <a
-            href={officialUrl}
+            href="https://consultas.anvisa.gov.br/#/produtossaude/"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-5 py-3 rounded-lg bg-[#06B6D4] text-white text-sm font-semibold hover:bg-[#0891B2] transition-colors shadow-sm"
           >
             <Search className="w-4 h-4" />
-            Consultar {query.trim() ? `"${query.trim()}"` : 'produto'} na ANVISA oficial
+            Abrir ANVISA — Produtos para Saúde
             <ArrowUpRight className="w-4 h-4" />
           </a>
-          <p className="text-[11px] text-neutral-400">
-            Ao abrir, o produto já estará buscado automaticamente
-          </p>
+          <div className="bg-amber-100 border border-amber-300 rounded-lg px-4 py-3 max-w-sm text-left">
+            <p className="text-xs text-amber-800 leading-relaxed">
+              ⚠️ O site da ANVISA pode redirecionar para a página inicial.<br />
+              Ao abrir, clique em <strong>{"'"}Produtos para Saúde{"'"}</strong> e busque por:{' '}
+              <strong className="font-mono">{query.trim() || '—'}</strong>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(query.trim()).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              });
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-amber-300 bg-white text-amber-800 text-sm font-medium hover:bg-amber-50 transition-colors"
+          >
+            {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+            {copied ? 'Copiado!' : 'Copiar nome do produto'}
+          </button>
         </div>
       )}
 
