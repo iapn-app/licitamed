@@ -76,6 +76,19 @@ const BROWSER_HEADERS = {
   'Origin': 'https://consul.anvisa.gov.br',
 };
 
+async function searchViaProxy(termo: string, tipo: string): Promise<NormalizedItem[]> {
+  const proxyUrl = process.env.ANVISA_PROXY_URL;
+  if (!proxyUrl) return [];
+  const params = new URLSearchParams({ q: termo, tipo });
+  const res = await fetch(`${proxyUrl}?${params}`, {
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) return [];
+  const data = await parseJsonSafe(res) as { content?: unknown[]; data?: unknown[]; result?: unknown[] };
+  const items = (data.content ?? data.data ?? data.result ?? []) as Record<string, unknown>[];
+  return items.map(normalizeAnvisa);
+}
+
 async function searchConsulAnvisa(termo: string, tipo: string): Promise<NormalizedItem[]> {
   const baseUrl = tipo === 'medicamento'
     ? 'https://consul.anvisa.gov.br/api/consulta/medicamentos/'
@@ -136,7 +149,18 @@ export async function GET(request: NextRequest) {
     ? `https://consultas.anvisa.gov.br/#/medicamentos/?nomeProduto=${encodeURIComponent(primeiroTermo)}`
     : `https://consultas.anvisa.gov.br/#/produtosHospitalares/?nomeProduto=${encodeURIComponent(primeiroTermo)}`;
 
-  // First: consul.anvisa.gov.br
+  // First: Cloudflare Worker proxy (if configured)
+  try {
+    const resultSets = await Promise.all(termos.map(t => searchViaProxy(t, tipo)));
+    const combined = dedup(resultSets.flat());
+    if (combined.length > 0) {
+      return NextResponse.json({ content: combined, fonte: 'anvisa-proxy', officialUrl });
+    }
+  } catch {
+    // fall through
+  }
+
+  // Second: consul.anvisa.gov.br direct
   try {
     const resultSets = await Promise.all(termos.map(t => searchConsulAnvisa(t, tipo)));
     const combined = dedup(resultSets.flat());
@@ -147,7 +171,7 @@ export async function GET(request: NextRequest) {
     // fall through
   }
 
-  // Second: dados.gov.br
+  // Third: dados.gov.br
   try {
     const resultSets = await Promise.all(termos.map(t => searchDadosGov(t)));
     const combined = dedup(resultSets.flat());
