@@ -14,12 +14,15 @@ export async function GET() {
     dataInicial,
     dataFinal,
     pagina: '1',
-    tamanhoPagina: '3',
+    tamanhoPagina: '10',
     codigoModalidadeContratacao: '6',
     uf: 'RJ',
   });
 
-  const url = `https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao?${params}`;
+  const proxyUrl = process.env.PNCP_PROXY_URL;
+  const url = proxyUrl
+    ? `${proxyUrl}?${params}`
+    : `https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao?${params}`;
 
   try {
     const res = await fetch(url, {
