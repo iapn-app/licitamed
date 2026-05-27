@@ -3,6 +3,7 @@ import { buscarContratosPNCP } from '@/lib/monitor/pncp';
 import { TODOS_SEGMENTOS } from '@/lib/monitor/segmentos';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 export const maxDuration = 55;
 
 export async function GET(req: NextRequest) {

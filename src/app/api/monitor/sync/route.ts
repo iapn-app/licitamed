@@ -3,6 +3,7 @@ import { buscarLicitacoesPNCP } from '@/lib/monitor/pncp';
 import { scrapeLicitacoesE } from '@/lib/monitor/scrapers';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 export const maxDuration = 55;
 
 export async function GET() {

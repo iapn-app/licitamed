@@ -19,6 +19,8 @@ interface PNCPItem {
   linkSistemaOrigem?: string;
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const dias = Math.min(90, Math.max(1, parseInt(searchParams.get("dias") ?? "30")));

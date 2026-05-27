@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { adminSupabase } from "@/lib/supabase";
 
+export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
 interface AIResult {

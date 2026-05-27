@@ -3,6 +3,7 @@ import { buscarContratosPNCP } from '@/lib/monitor/pncp';
 import { classificarSegmento } from '@/lib/monitor/segmentos';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
 export async function GET(

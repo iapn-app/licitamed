@@ -103,6 +103,8 @@ async function fetchByCnae(cnae: string, uf: string): Promise<FornecedorNorm[]> 
   return (raw?.resultado ?? []).map(normalize).filter((f) => f.ativo && f.uf === uf);
 }
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const cnae = searchParams.get("cnae");
