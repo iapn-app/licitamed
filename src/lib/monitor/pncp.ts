@@ -62,33 +62,59 @@ const PNCP_BASE_URL = process.env.PNCP_PROXY_URL?.trim() || 'https://pncp.gov.br
 console.log('PNCP_BASE_URL:', PNCP_BASE_URL);
 
 async function buscarModalidade(modalidade: number, dataInicial: string, dataFinal: string, uf: string): Promise<LicitacaoMonitor[]> {
-  const params = new URLSearchParams({
-    dataInicial, dataFinal,
-    pagina: '1',
-    tamanhoPagina: '20',
-    codigoModalidadeContratacao: String(modalidade),
-  });
-  if (uf) params.set('uf', uf);
+  const timeout = process.env.PNCP_PROXY_URL ? 25000 : 8000;
 
-  const urlObj = new URL(PNCP_BASE_URL);
-  params.forEach((value, key) => urlObj.searchParams.set(key, value));
-  const url = urlObj.toString();
+  const buildUrl = (pagina: number) => {
+    const params = new URLSearchParams({
+      dataInicial, dataFinal,
+      pagina: String(pagina),
+      tamanhoPagina: '20',
+      codigoModalidadeContratacao: String(modalidade),
+    });
+    if (uf) params.set('uf', uf);
+    const urlObj = new URL(PNCP_BASE_URL);
+    params.forEach((value, key) => urlObj.searchParams.set(key, value));
+    return urlObj.toString();
+  };
 
   console.log(`PNCP: modalidade=${modalidade} via ${process.env.PNCP_PROXY_URL ? 'proxy' : 'direto'}...`);
 
-  const res = await fetch(url, {
+  // Página 1 para descobrir totalPaginas
+  const res1 = await fetch(buildUrl(1), {
     headers: { Accept: 'application/json' },
-    signal: AbortSignal.timeout(process.env.PNCP_PROXY_URL ? 25000 : 8000),
+    signal: AbortSignal.timeout(timeout),
   });
 
-  if (!res.ok) {
-    console.log(`PNCP: HTTP ${res.status} modalidade=${modalidade}`);
+  if (!res1.ok) {
+    console.log(`PNCP: HTTP ${res1.status} modalidade=${modalidade}`);
     return [];
   }
 
-  const json = await res.json() as { data?: PNCPItem[] };
-  const items = json.data ?? [];
-  console.log(`PNCP: modalidade=${modalidade} → ${items.length} itens`);
+  const json1 = await res1.json() as { data?: PNCPItem[]; totalPaginas?: number };
+  const totalPaginas = json1.totalPaginas ?? 1;
+
+  // Se há apenas uma página, retornar direto
+  if (totalPaginas <= 1) {
+    const items = json1.data ?? [];
+    console.log(`PNCP: modalidade=${modalidade} → ${items.length} itens (1 pág)`);
+    return items.map(item => mapPNCPItem(item, uf));
+  }
+
+  // Buscar última página — contém os itens mais recentes (API ordena por data ASC)
+  const resLast = await fetch(buildUrl(totalPaginas), {
+    headers: { Accept: 'application/json' },
+    signal: AbortSignal.timeout(timeout),
+  });
+
+  if (!resLast.ok) {
+    const items = json1.data ?? [];
+    console.log(`PNCP: modalidade=${modalidade} → ${items.length} itens (fallback p1 de ${totalPaginas})`);
+    return items.map(item => mapPNCPItem(item, uf));
+  }
+
+  const jsonLast = await resLast.json() as { data?: PNCPItem[] };
+  const items = jsonLast.data ?? [];
+  console.log(`PNCP: modalidade=${modalidade} → ${items.length} itens (pág ${totalPaginas}/${totalPaginas})`);
   return items.map(item => mapPNCPItem(item, uf));
 }
 
