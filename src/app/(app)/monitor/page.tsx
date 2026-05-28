@@ -540,15 +540,15 @@ export default function MonitorPage() {
                   <div className="w-full flex items-center justify-between px-3 py-2 bg-green-50 border border-green-200 rounded-md">
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="w-4 h-4 text-green-500" />
-                      <p className="text-xs font-medium text-green-700">Checklist gerado com IA!</p>
+                      <p className="text-xs font-medium text-green-700">Checklist gerado! Redirecionando...</p>
                     </div>
                     <button
                       type="button"
                       className="text-xs font-semibold text-green-700 hover:text-green-900 flex items-center gap-1"
-                      onClick={() => { setSelected(null); router.push('/checklists'); }}
+                      onClick={() => { setSelected(null); router.push(`/checklists/${checklistId}`); }}
                     >
                       <ClipboardList className="w-3.5 h-3.5" />
-                      Ver checklist
+                      Ver agora
                     </button>
                   </div>
                 )}
@@ -570,12 +570,19 @@ export default function MonitorPage() {
                       });
                       const data = await res.json() as { checklistId?: string; usouIA?: boolean; erro?: string };
                       if (data.erro) throw new Error(data.erro);
-                      setChecklistId(data.checklistId ?? null);
-                      toast.success('Importado e checklist gerado!', {
+                      const id = data.checklistId ?? null;
+                      setChecklistId(id);
+                      toast.success('Checklist gerado!', {
                         description: data.usouIA ? 'Analisado por IA (Claude)' : 'Checklist padrão aplicado',
                       });
+                      if (id) {
+                        setTimeout(() => {
+                          setSelected(null);
+                          router.push(`/checklists/${id}`);
+                        }, 2000);
+                      }
                     } catch (e) {
-                      toast.error('Erro ao importar', { description: e instanceof Error ? e.message : String(e) });
+                      toast.error('Erro ao gerar checklist', { description: e instanceof Error ? e.message : String(e) });
                     } finally {
                       setImporting(false);
                     }
@@ -583,7 +590,7 @@ export default function MonitorPage() {
                 >
                   {importing
                     ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Gerando checklist...</>
-                    : <><ClipboardList className="w-4 h-4" />Importar para Power Med</>
+                    : <><ClipboardList className="w-4 h-4" />Gerar Checklist IA</>
                   }
                 </Button>
                 <Link
