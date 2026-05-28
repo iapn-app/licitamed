@@ -29,8 +29,12 @@ export async function GET(req: NextRequest) {
 
   console.log('Monitor licitacoes: iniciando busca', { uf, keyword, fonte, diasPassados });
 
+  // Quando há palavra-chave, divide em janelas de 10 dias para cobrir o período completo
+  // sem precisar de page numbers altos (que o proxy Cloudflare não suporta)
+  const janelasDias = keyword ? 10 : undefined;
+
   const [pncpResult, licitacoesEResult] = await Promise.allSettled([
-    buscarLicitacoesPNCP({ uf, diasPassados, filtrarKeywords: false }),
+    buscarLicitacoesPNCP({ uf, diasPassados, filtrarKeywords: false, janelasDias }),
     scrapeLicitacoesE(),
   ]);
 

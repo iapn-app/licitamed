@@ -121,30 +121,63 @@ async function buscarModalidade(modalidade: number, dataInicial: string, dataFin
   return todos.map(item => mapPNCPItem(item, uf));
 }
 
+// Gera janelas de [tamanho] dias cobrindo os últimos [total] dias
+// Cada janela busca páginas 1-10, evitando page numbers altos que travam o proxy
+function gerarJanelas(totalDias: number, tamanhoDias: number): Array<{ dataInicial: string; dataFinal: string }> {
+  const janelas: Array<{ dataInicial: string; dataFinal: string }> = [];
+  const now = new Date();
+  let cursor = new Date(now);
+
+  while (cursor > new Date(now.getTime() - totalDias * 86400000)) {
+    const fim = new Date(cursor);
+    const ini = new Date(cursor);
+    ini.setDate(ini.getDate() - tamanhoDias);
+    if (ini < new Date(now.getTime() - totalDias * 86400000)) {
+      ini.setTime(new Date(now.getTime() - totalDias * 86400000).getTime());
+    }
+    janelas.push({ dataInicial: toDateStr(ini), dataFinal: toDateStr(fim) });
+    cursor.setDate(cursor.getDate() - tamanhoDias);
+  }
+
+  return janelas;
+}
+
 export async function buscarLicitacoesPNCP(options: {
   diasPassados?: number;
   uf?: string;
   paginas?: number;
   filtrarKeywords?: boolean;
+  janelasDias?: number; // divide o período em janelas menores para cobrir datas recentes
 }): Promise<LicitacaoMonitor[]> {
-  const { diasPassados = 3, uf = 'RJ', filtrarKeywords = false } = options;
-  const now = new Date();
-  const inicio = new Date(now); inicio.setDate(now.getDate() - diasPassados);
+  const { diasPassados = 3, uf = 'RJ', filtrarKeywords = false, janelasDias } = options;
 
-  const dataInicial = toDateStr(inicio);
-  const dataFinal = toDateStr(now);
-  console.log('PNCP período de busca:', dataInicial, 'até', dataFinal);
+  // Quando janelasDias está definido, divide o período em janelas de N dias
+  // Cada janela busca páginas 1-10 → cobre no máximo 500 itens por janela
+  // Evita page numbers altos que o proxy Cloudflare não consegue processar
+  const janelas = janelasDias
+    ? gerarJanelas(diasPassados, janelasDias)
+    : (() => {
+        const now = new Date();
+        const inicio = new Date(now); inicio.setDate(now.getDate() - diasPassados);
+        return [{ dataInicial: toDateStr(inicio), dataFinal: toDateStr(now) }];
+      })();
 
-  const resultados = await Promise.allSettled(
-    MODALIDADES_PNCP.map(m => buscarModalidade(m, dataInicial, dataFinal, uf))
-  );
+  console.log(`PNCP: ${janelas.length} janela(s) de busca`);
+  janelas.forEach((j, i) => console.log(`  janela ${i + 1}: ${j.dataInicial} → ${j.dataFinal}`));
 
   const seen = new Set<string>();
   const resultado: LicitacaoMonitor[] = [];
 
+  // Busca todas as janelas × modalidades em paralelo
+  const tarefas = janelas.flatMap(j =>
+    MODALIDADES_PNCP.map(m => buscarModalidade(m, j.dataInicial, j.dataFinal, uf))
+  );
+
+  const resultados = await Promise.allSettled(tarefas);
+
   for (const r of resultados) {
     if (r.status !== 'fulfilled') {
-      console.log('PNCP: modalidade falhou', (r as PromiseRejectedResult).reason);
+      console.log('PNCP: tarefa falhou', (r as PromiseRejectedResult).reason);
       continue;
     }
     for (const item of r.value) {
