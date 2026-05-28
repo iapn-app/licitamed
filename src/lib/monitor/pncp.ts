@@ -34,9 +34,10 @@ function toDateStr(d: Date): string {
     .replace(/-/g, '');
 }
 
-// Modalidades: 4=Concorrência Eletrônica, 6=Pregão Eletrônico, 7=Pregão Presencial,
-// 8=Dispensa, 9=Inexigibilidade, 13=Credenciamento
-const MODALIDADES_PNCP = [4, 6, 7, 8, 9, 13];
+// Modalidades: 1=Leilão, 2=Diálogo Competitivo, 3=Concurso, 4=Concorrência,
+// 5=Pregão, 6=Pregão Eletrônico, 7=Dispensa Eletrônica, 8=Dispensa,
+// 9=Inexigibilidade, 12=Manifestação de Interesse
+const MODALIDADES_PNCP = [1, 2, 3, 4, 5, 6, 7, 8, 9, 12];
 
 function mapPNCPItem(item: PNCPItem, uf: string): LicitacaoMonitor {
   const objeto = item.objetoCompra ?? '';
@@ -61,6 +62,10 @@ function mapPNCPItem(item: PNCPItem, uf: string): LicitacaoMonitor {
 const PNCP_BASE_URL = process.env.PNCP_PROXY_URL?.trim() || 'https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao';
 console.log('PNCP_BASE_URL:', PNCP_BASE_URL);
 
+// A API do PNCP retorna itens em ordem ASC (mais antigos primeiro).
+// Quando há muitas páginas, buscamos as ÚLTIMAS (mais recentes) em vez das primeiras.
+const PAGINAS_CAP = 5;
+
 async function buscarModalidade(modalidade: number, dataInicial: string, dataFinal: string, uf: string): Promise<LicitacaoMonitor[]> {
   const timeout = process.env.PNCP_PROXY_URL ? 25000 : 8000;
 
@@ -77,6 +82,12 @@ async function buscarModalidade(modalidade: number, dataInicial: string, dataFin
     return urlObj.toString();
   };
 
+  const fetchPage = (p: number): Promise<PNCPItem[]> =>
+    fetch(buildUrl(p), { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(timeout) })
+      .then(r => r.ok ? r.json() as Promise<{ data?: PNCPItem[] }> : Promise.resolve({ data: [] as PNCPItem[] }))
+      .then(d => d.data ?? [])
+      .catch(() => [] as PNCPItem[]);
+
   console.log(`PNCP: modalidade=${modalidade} via ${process.env.PNCP_PROXY_URL ? 'proxy' : 'direto'}...`);
 
   const res1 = await fetch(buildUrl(1), {
@@ -90,28 +101,35 @@ async function buscarModalidade(modalidade: number, dataInicial: string, dataFin
   }
 
   const json1 = await res1.json() as { data?: PNCPItem[]; totalPaginas?: number };
-  const totalPaginas = Math.min(json1.totalPaginas ?? 1, 10);
-  const pagina1Items = json1.data ?? [];
+  const totalPaginas = json1.totalPaginas ?? 1;
 
   if (totalPaginas <= 1) {
-    console.log(`PNCP: modalidade=${modalidade} → ${pagina1Items.length} itens (1 pág)`);
-    return pagina1Items.map(item => mapPNCPItem(item, uf));
+    const items = json1.data ?? [];
+    console.log(`PNCP: modalidade=${modalidade} → ${items.length} itens (1 pág)`);
+    return items.map(item => mapPNCPItem(item, uf));
   }
 
-  // Buscar páginas 2..totalPaginas em paralelo
-  const promises: Promise<PNCPItem[]>[] = [];
-  for (let p = 2; p <= totalPaginas; p++) {
-    promises.push(
-      fetch(buildUrl(p), { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(timeout) })
-        .then(r => r.ok ? r.json() as Promise<{ data?: PNCPItem[] }> : Promise.resolve({ data: [] as PNCPItem[] }))
-        .then(d => d.data ?? [])
-        .catch(() => [] as PNCPItem[])
-    );
+  let pagesToFetch: number[];
+  let baseItems: PNCPItem[];
+
+  if (totalPaginas <= PAGINAS_CAP) {
+    // Poucas páginas: buscar todas, reaproveitar página 1
+    pagesToFetch = Array.from({ length: totalPaginas - 1 }, (_, i) => i + 2);
+    baseItems = json1.data ?? [];
+  } else {
+    // Muitas páginas: buscar as ÚLTIMAS (mais recentes), descartar página 1 (dados antigos)
+    const startPage = totalPaginas - PAGINAS_CAP + 1;
+    pagesToFetch = Array.from({ length: PAGINAS_CAP }, (_, i) => startPage + i);
+    baseItems = [];
   }
 
-  const paginas = await Promise.all(promises);
-  const todos: PNCPItem[] = [...pagina1Items, ...paginas.flat()];
-  console.log(`PNCP: modalidade=${modalidade} → ${todos.length} itens (${totalPaginas} págs)`);
+  const paginas = await Promise.all(pagesToFetch.map(fetchPage));
+  const todos: PNCPItem[] = [...baseItems, ...paginas.flat()];
+
+  const range = totalPaginas <= PAGINAS_CAP
+    ? `págs 1-${totalPaginas}`
+    : `págs ${totalPaginas - PAGINAS_CAP + 1}-${totalPaginas} de ${totalPaginas}`;
+  console.log(`PNCP: modalidade=${modalidade} → ${todos.length} itens (${range})`);
   return todos.map(item => mapPNCPItem(item, uf));
 }
 
@@ -149,6 +167,7 @@ export async function buscarLicitacoesPNCP(options: {
     }
   }
 
+  resultado.sort((a, b) => b.dataPublicacao.localeCompare(a.dataPublicacao));
   console.log(`PNCP: total encontrado = ${resultado.length}`);
   return resultado;
 }
