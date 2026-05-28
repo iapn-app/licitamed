@@ -243,7 +243,7 @@ interface ItemRow {
 
 const emptyItem = (): ItemRow => ({ descricao: '', apresentacao: '', unidade: 'UN', quantidade: '', marca: '', valorUnitario: '' });
 
-function CotacaoModal({ checklistId, orgao, onClose }: { checklistId: string; orgao: string; onClose: () => void }) {
+function CotacaoModal({ checklistId, onClose }: { checklistId: string; orgao: string; onClose: () => void }) {
   const [condicoesPgto, setCondicoesPgto] = useState('30/60/90 dias');
   const [frete, setFrete] = useState('CIF');
   const [validade, setValidade] = useState('15 dias úteis');

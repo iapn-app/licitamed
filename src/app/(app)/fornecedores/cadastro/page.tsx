@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  Users, Plus, Phone, Mail, Package, Pencil, Trash2,
+  Users, Plus, Mail, Package, Pencil, Trash2,
   X, Save, Loader2, RefreshCw, MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";

@@ -29,7 +29,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   }
 
   // Match internal suppliers by keywords from objeto
-  let fornecedoresInternos: Array<{
+  const fornecedoresInternos: Array<{
     fornecedor_id: string;
     nome_empresa: string;
     whatsapp: string | null;

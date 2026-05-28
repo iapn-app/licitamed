@@ -82,10 +82,6 @@ function fmtDate(d: Date) {
   return `${dd}/${mm}/${yyyy}`;
 }
 
-async function nextNumero(fileName: string): Promise<string> {
-  // número único baseado em timestamp para evitar colisão
-  return fileName;
-}
 
 export async function POST(req: NextRequest) {
   try {
