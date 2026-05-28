@@ -109,7 +109,8 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const cnae = searchParams.get("cnae");
-  const uf = searchParams.get("uf") ?? undefined;
+  const ufParam = searchParams.get("uf");
+  const uf = (ufParam && ufParam !== "TODOS") ? ufParam : undefined;
 
   try {
     // "Todas as categorias": fetch all unique CNAEs in parallel and deduplicate

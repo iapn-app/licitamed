@@ -168,7 +168,7 @@ function SupplierCardSkeleton() {
 
 export default function RadarPage() {
   const [categoriaId, setCategoriaId] = useState("todas");
-  const [uf, setUf] = useState("");
+  const [uf, setUf] = useState("TODOS");
   const [nameSearch, setNameSearch] = useState("");
   const [searchState, setSearchState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -191,7 +191,7 @@ export default function RadarPage() {
 
     try {
       const params = new URLSearchParams({ cnae: categoria.cnae });
-      if (uf) params.set("uf", uf);
+      if (uf && uf !== "TODOS") params.set("uf", uf);
       const res = await fetch(`/api/radar?${params}`);
 
       if (!res.ok) {
@@ -339,7 +339,7 @@ export default function RadarPage() {
                 <SelectValue placeholder="Todos os estados" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os estados</SelectItem>
+                <SelectItem value="TODOS">Todos os estados</SelectItem>
                 {UFS.map((sigla) => (
                   <SelectItem key={sigla} value={sigla}>
                     {sigla} — {UF_NAMES[sigla]}
