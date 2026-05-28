@@ -89,7 +89,6 @@ const ALL_CNAES = [
   "4645102", // Descartáveis e correlatos
   "4684201", // Saneantes e higiene hospitalar
   // Fabricantes — materiais médicos e hospitalares
-  "3292002", // Fabricação de equipamentos de proteção individual
   "3250705", // Fabricação de materiais para medicina e odontologia
   "3250706", // Serviços de prótese dentária
   // Fabricantes — descartáveis e correlatos

@@ -81,6 +81,20 @@ interface FornecedorAPI {
   habilitado_licitar: boolean;
 }
 
+interface CnpjEmpresa {
+  cnpj: string;
+  nome: string;
+  municipio: string;
+  uf: string;
+  ativo: boolean;
+  habilitadoLicitar: boolean;
+  cnae: string | null;
+  nomeCnae: string | null;
+  naturezaJuridica: string | null;
+  porte: string | null;
+  cadastradoSiasg: boolean;
+}
+
 interface CNPJData {
   // Flat structure (receitaws-style)
   nome?: string;
@@ -167,11 +181,16 @@ function SupplierCardSkeleton() {
 }
 
 export default function RadarPage() {
+  const [mode, setMode] = useState<"categoria" | "cnpj">("categoria");
   const [categoriaId, setCategoriaId] = useState("todas");
   const [uf, setUf] = useState("TODOS");
   const [nameSearch, setNameSearch] = useState("");
   const [searchState, setSearchState] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [cnpjInput, setCnpjInput] = useState("");
+  const [cnpjResult, setCnpjResult] = useState<CnpjEmpresa | null>(null);
+  const [cnpjSearchState, setCnpjSearchState] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [cnpjErrorMsg, setCnpjErrorMsg] = useState("");
   const [results, setResults] = useState<FornecedorAPI[]>([]);
   const [usingMock, setUsingMock] = useState(false);
   const [page, setPage] = useState(0);
@@ -214,6 +233,34 @@ export default function RadarPage() {
       const msg = err instanceof Error ? err.message : "Erro desconhecido";
       setErrorMsg(msg);
       setSearchState("error");
+    }
+  };
+
+  const formatCnpjInput = (value: string) => {
+    const n = value.replace(/\D/g, "").slice(0, 14);
+    if (n.length <= 2) return n;
+    if (n.length <= 5) return `${n.slice(0, 2)}.${n.slice(2)}`;
+    if (n.length <= 8) return `${n.slice(0, 2)}.${n.slice(2, 5)}.${n.slice(5)}`;
+    if (n.length <= 12) return `${n.slice(0, 2)}.${n.slice(2, 5)}.${n.slice(5, 8)}/${n.slice(8)}`;
+    return `${n.slice(0, 2)}.${n.slice(2, 5)}.${n.slice(5, 8)}/${n.slice(8, 12)}-${n.slice(12)}`;
+  };
+
+  const handleCnpjSearch = async () => {
+    const cnpj = cnpjInput.replace(/\D/g, "");
+    if (cnpj.length !== 14) { toast.error("Informe um CNPJ válido com 14 dígitos"); return; }
+    setCnpjSearchState("loading");
+    setCnpjResult(null);
+    try {
+      const res = await fetch(`/api/radar/cnpj?cnpj=${cnpj}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error || `Erro ${res.status}`);
+      }
+      setCnpjResult(await res.json() as CnpjEmpresa);
+      setCnpjSearchState("success");
+    } catch (err) {
+      setCnpjErrorMsg(err instanceof Error ? err.message : "Erro desconhecido");
+      setCnpjSearchState("error");
     }
   };
 
@@ -304,7 +351,7 @@ export default function RadarPage() {
             <h1 className="text-xl font-semibold text-neutral-900">Radar de Fornecedores</h1>
           </div>
           <p className="text-sm text-neutral-500">
-            Encontre novos fornecedores em todo o Brasil usando dados públicos oficiais
+            Empresas cadastradas no portal de compras do governo federal (SIASG). Para buscar qualquer empresa, use a busca por CNPJ.
           </p>
         </div>
         <span className="flex items-center gap-1.5 px-2.5 py-1 bg-green-50 border border-green-200 rounded-full text-xs font-medium text-green-700 whitespace-nowrap flex-shrink-0">
@@ -313,8 +360,25 @@ export default function RadarPage() {
         </span>
       </div>
 
+      {/* Mode toggle */}
+      <div className="flex gap-1 bg-neutral-100 rounded-lg p-1 w-fit">
+        <button
+          onClick={() => setMode("categoria")}
+          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === "categoria" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
+        >
+          Por Categoria
+        </button>
+        <button
+          onClick={() => setMode("cnpj")}
+          className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${mode === "cnpj" ? "bg-white text-neutral-900 shadow-sm" : "text-neutral-500 hover:text-neutral-700"}`}
+        >
+          Por CNPJ
+        </button>
+      </div>
+
       {/* Search panel */}
       <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card p-5">
+        {mode === "categoria" ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
           <div>
             <label className="text-xs font-medium text-neutral-600 mb-1.5 block">Categoria</label>
@@ -366,13 +430,25 @@ export default function RadarPage() {
             </div>
           </div>
         </div>
+        ) : (
+        <div className="mb-4">
+          <label className="text-xs font-medium text-neutral-600 mb-1.5 block">CNPJ da Empresa</label>
+          <Input
+            placeholder="00.000.000/0000-00"
+            value={cnpjInput}
+            onChange={(e) => setCnpjInput(formatCnpjInput(e.target.value))}
+            onKeyDown={(e) => e.key === "Enter" && handleCnpjSearch()}
+            className="max-w-xs font-mono"
+          />
+        </div>
+        )}
 
         <Button
-          onClick={handleSearch}
-          disabled={searchState === "loading"}
+          onClick={mode === "categoria" ? handleSearch : handleCnpjSearch}
+          disabled={searchState === "loading" || cnpjSearchState === "loading"}
           className="gap-2 w-full md:w-auto"
         >
-          {searchState === "loading" ? (
+          {(searchState === "loading" || cnpjSearchState === "loading") ? (
             <>
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               Buscando...
@@ -380,14 +456,14 @@ export default function RadarPage() {
           ) : (
             <>
               <Search className="w-4 h-4" />
-              Buscar Fornecedores
+              {mode === "categoria" ? "Buscar Fornecedores" : "Buscar CNPJ"}
             </>
           )}
         </Button>
       </div>
 
-      {/* Loading skeletons */}
-      {searchState === "loading" && (
+      {/* Loading skeletons — categoria mode only */}
+      {mode === "categoria" && searchState === "loading" && (
         <div className="space-y-4">
           <Skeleton className="h-4 w-52" />
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -398,8 +474,93 @@ export default function RadarPage() {
         </div>
       )}
 
+      {/* CNPJ result */}
+      {mode === "cnpj" && cnpjSearchState === "error" && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-5 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-medium text-red-700">Empresa não encontrada</p>
+            <p className="text-xs text-red-600 mt-0.5">{cnpjErrorMsg}</p>
+          </div>
+        </div>
+      )}
+
+      {mode === "cnpj" && cnpjSearchState === "success" && cnpjResult && (
+        <div className="neon-card bg-white rounded-lg border border-neutral-200 shadow-card p-5 max-w-lg">
+          <div className="flex items-start gap-3 mb-4">
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-base font-semibold flex-shrink-0 ${getAvatarColor(cnpjResult.nome)}`}>
+              {getInitials(cnpjResult.nome)}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-neutral-900 leading-snug">{cnpjResult.nome}</p>
+              <p className="text-xs text-neutral-400 font-mono mt-0.5">{formatCNPJ(cnpjResult.cnpj)}</p>
+              {cnpjResult.municipio && (
+                <div className="flex items-center gap-1 mt-1 text-xs text-neutral-500">
+                  <MapPin className="w-3 h-3 flex-shrink-0" />
+                  {cnpjResult.municipio}{cnpjResult.uf ? `, ${cnpjResult.uf}` : ""}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {cnpjResult.cadastradoSiasg ? (
+              <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                <CheckCircle2 className="w-3 h-3" />
+                Cadastrado no Gov (SIASG)
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                <Info className="w-3 h-3" />
+                Não cadastrado no SIASG
+              </span>
+            )}
+            {cnpjResult.habilitadoLicitar && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-green-50 text-green-700 border border-green-200">
+                <CheckCircle2 className="w-3 h-3" />
+                Habilitado a licitar
+              </span>
+            )}
+            {cnpjResult.ativo && (
+              <span className="inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-600 border border-neutral-200">
+                Ativo
+              </span>
+            )}
+          </div>
+
+          {(cnpjResult.nomeCnae || cnpjResult.naturezaJuridica || cnpjResult.porte) && (
+            <dl className="space-y-1.5 border-t border-neutral-100 pt-3">
+              {cnpjResult.nomeCnae && (
+                <div className="flex gap-2">
+                  <dt className="text-[10px] font-medium text-neutral-400 uppercase tracking-wide w-24 flex-shrink-0 pt-0.5">CNAE</dt>
+                  <dd className="text-xs text-neutral-700">{cnpjResult.cnae} — {cnpjResult.nomeCnae}</dd>
+                </div>
+              )}
+              {cnpjResult.naturezaJuridica && (
+                <div className="flex gap-2">
+                  <dt className="text-[10px] font-medium text-neutral-400 uppercase tracking-wide w-24 flex-shrink-0 pt-0.5">Natureza</dt>
+                  <dd className="text-xs text-neutral-700">{cnpjResult.naturezaJuridica}</dd>
+                </div>
+              )}
+              {cnpjResult.porte && (
+                <div className="flex gap-2">
+                  <dt className="text-[10px] font-medium text-neutral-400 uppercase tracking-wide w-24 flex-shrink-0 pt-0.5">Porte</dt>
+                  <dd className="text-xs text-neutral-700">{cnpjResult.porte}</dd>
+                </div>
+              )}
+            </dl>
+          )}
+
+          <div className="pt-4 border-t border-neutral-100 mt-4">
+            <Button size="sm" className="text-xs h-8" onClick={() => handleAddToRegistry({ cnpj: cnpjResult.cnpj, nome: cnpjResult.nome, municipio_descricao: cnpjResult.municipio, uf: cnpjResult.uf, ativo: cnpjResult.ativo, habilitado_licitar: cnpjResult.habilitadoLicitar })}>
+              Adicionar ao cadastro
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Error state */}
-      {searchState === "error" && (
+      {mode === "categoria" && searchState === "error" && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-5 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
           <div>
@@ -410,7 +571,7 @@ export default function RadarPage() {
       )}
 
       {/* Empty state */}
-      {searchState === "success" && results.length === 0 && (
+      {mode === "categoria" && searchState === "success" && results.length === 0 && (
         <div className="bg-white rounded-lg border border-neutral-200 p-12 text-center">
           <Building2 className="w-10 h-10 text-neutral-200 mx-auto mb-3" />
           <p className="text-sm font-medium text-neutral-600">
@@ -423,7 +584,7 @@ export default function RadarPage() {
       )}
 
       {/* Mock data warning */}
-      {searchState === "success" && usingMock && (
+      {mode === "categoria" && searchState === "success" && usingMock && (
         <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-xs text-amber-700">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span>
@@ -433,7 +594,7 @@ export default function RadarPage() {
       )}
 
       {/* Results */}
-      {searchState === "success" && results.length > 0 && (
+      {mode === "categoria" && searchState === "success" && results.length > 0 && (
         <div className="space-y-4">
           {/* Counter + top pagination */}
           <div className="flex items-center justify-between flex-wrap gap-3">
