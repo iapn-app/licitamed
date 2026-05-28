@@ -193,9 +193,23 @@ export default function MonitorPage() {
     setKeyword(''); setFonte(''); setModalidade(''); setDataInicial(''); setDataFinal('');
   }
 
-  // Apply client-side modalidade filter + sort
+  // Apply client-side filters (modalidade + keyword) + sort
+  // Keyword filtra imediatamente nos dados já carregados enquanto o usuário digita
   const filtered = (data?.dados ?? [])
-    .filter(d => !modalidade || d.modalidade === modalidade)
+    .filter(d => {
+      if (modalidade && d.modalidade !== modalidade) return false;
+      if (keyword) {
+        const kw = keyword.toLowerCase();
+        return (
+          d.objeto.toLowerCase().includes(kw) ||
+          d.orgao.toLowerCase().includes(kw) ||
+          d.modalidade.toLowerCase().includes(kw) ||
+          (d.numeroEdital ?? '').toLowerCase().includes(kw) ||
+          (d.municipio ?? '').toLowerCase().includes(kw)
+        );
+      }
+      return true;
+    })
     .sort((a, b) => {
       let av: string | number = '';
       let bv: string | number = '';

@@ -18,8 +18,8 @@ export async function GET(req: NextRequest) {
   const dataFinal = searchParams.get('dataFinal') ?? '';
 
   // Calcular diasPassados a partir do filtro de data da UI (yyyy-mm-dd)
-  // Se não houver datas, usa padrão de 3 dias
-  let diasPassados = 3;
+  // Se não houver datas, usa 30 dias quando há palavra-chave (busca específica) ou 3 dias (navegação padrão)
+  let diasPassados = keyword ? 30 : 3;
   if (dataInicial) {
     const inicio = new Date(dataInicial + 'T12:00:00');
     const fim = dataFinal ? new Date(dataFinal + 'T12:00:00') : new Date();
@@ -70,12 +70,16 @@ export async function GET(req: NextRequest) {
   const seen = new Set<string>();
   dados = dados.filter(d => { if (seen.has(d.id)) return false; seen.add(d.id); return true; });
 
-  // Apply filters
+  // Apply filters — busca em todos os campos relevantes
   if (keyword) {
-    const kw = keyword.toLowerCase();
+    const kw = keyword.toLowerCase().replace(/\s+/g, ' ').trim();
     dados = dados.filter(d =>
       d.objeto.toLowerCase().includes(kw) ||
-      d.orgao.toLowerCase().includes(kw)
+      d.orgao.toLowerCase().includes(kw) ||
+      d.modalidade.toLowerCase().includes(kw) ||
+      (d.numeroEdital ?? '').toLowerCase().includes(kw) ||
+      (d.municipio ?? '').toLowerCase().includes(kw) ||
+      d.id.toLowerCase().includes(kw.replace(/\//g, ''))  // busca sem barra no numeroControlePNCP
     );
   }
   if (fonte) dados = dados.filter(d => d.fonte === fonte);

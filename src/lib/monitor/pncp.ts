@@ -4,7 +4,9 @@ import { classificarSegmento } from './segmentos';
 
 interface PNCPItem {
   numeroControlePNCP?: string;
-  unidadeOrgao?: { nomeUnidade?: string; municipioNome?: string; ufSigla?: string };
+  numeroCompra?: number | string;
+  anoCompra?: number | string;
+  unidadeOrgao?: { nomeUnidade?: string; municipioNome?: string; ufSigla?: string; codigoUnidade?: string };
   orgaoEntidade?: { razaoSocial?: string; cnpj?: string };
   objetoCompra?: string;
   modalidadeNome?: string;
@@ -41,6 +43,10 @@ const MODALIDADES_PNCP = [1, 2, 3, 4, 5, 6, 7, 8, 9, 12];
 
 function mapPNCPItem(item: PNCPItem, uf: string): LicitacaoMonitor {
   const objeto = item.objetoCompra ?? '';
+  // Monta número legível: "90029/2026" para facilitar busca textual
+  const numeroEdital = (item.numeroCompra && item.anoCompra)
+    ? `${item.numeroCompra}/${item.anoCompra}`
+    : null;
   return {
     id: item.numeroControlePNCP ?? `pncp-${Date.now()}-${Math.random()}`,
     fonte: 'PNCP',
@@ -53,6 +59,7 @@ function mapPNCPItem(item: PNCPItem, uf: string): LicitacaoMonitor {
     dataAbertura: item.dataAberturaProposta?.slice(0, 10) ?? null,
     status: 'ativa',
     urlEdital: item.linkSistemaOrigem ?? null,
+    numeroEdital,
     municipio: item.unidadeOrgao?.municipioNome ?? null,
     uf: item.unidadeOrgao?.ufSigla ?? uf,
     palavrasEncontradas: encontrarPalavras(objeto),
