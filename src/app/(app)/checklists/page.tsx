@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ClipboardList, RefreshCw, ChevronDown, ChevronRight,
   AlertTriangle, CheckCircle2, Clock, XCircle, ExternalLink,
-  TrendingUp, Sparkles,
+  TrendingUp, Sparkles, FileText, Plus, Trash2, Loader2,
+  Users, MessageCircle, Mail,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -43,9 +44,19 @@ interface ChecklistItem {
   ordem: number | null;
 }
 
+interface FornecedorInterno {
+  fornecedor_id: string;
+  nome_empresa: string;
+  whatsapp: string | null;
+  email: string | null;
+  nome_contato: string | null;
+  produto_match: string;
+}
+
 interface ChecklistDetail extends ChecklistRow {
   itens: ChecklistItem[];
   categorias: Record<string, ChecklistItem[]>;
+  fornecedoresInternos?: FornecedorInterno[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -219,11 +230,170 @@ function CategoriaAccordion({ categoria, itens, onUpdate }: {
   );
 }
 
+// ─── Cotação modal ─────────────────────────────────────────────────────────────
+
+interface ItemRow {
+  descricao: string;
+  apresentacao: string;
+  unidade: string;
+  quantidade: string;
+  marca: string;
+  valorUnitario: string;
+}
+
+const emptyItem = (): ItemRow => ({ descricao: '', apresentacao: '', unidade: 'UN', quantidade: '', marca: '', valorUnitario: '' });
+
+function CotacaoModal({ checklistId, orgao, onClose }: { checklistId: string; orgao: string; onClose: () => void }) {
+  const [condicoesPgto, setCondicoesPgto] = useState('30/60/90 dias');
+  const [frete, setFrete] = useState('CIF');
+  const [validade, setValidade] = useState('15 dias úteis');
+  const [itens, setItens] = useState<ItemRow[]>([emptyItem(), emptyItem(), emptyItem()]);
+  const [gerando, setGerando] = useState(false);
+
+  function addRow() { setItens(prev => [...prev, emptyItem()]); }
+  function removeRow(i: number) { setItens(prev => prev.filter((_, idx) => idx !== i)); }
+  function updateRow(i: number, field: keyof ItemRow, val: string) {
+    setItens(prev => prev.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
+  }
+
+  async function handleGerar() {
+    setGerando(true);
+    try {
+      const payload = {
+        checklistId,
+        condicoesPgto,
+        frete,
+        validade,
+        itens: itens
+          .filter(r => r.descricao.trim())
+          .map(r => ({
+            descricao: r.descricao,
+            apresentacao: r.apresentacao || undefined,
+            unidade: r.unidade || undefined,
+            quantidade: r.quantidade ? Number(r.quantidade) : undefined,
+            marca: r.marca || undefined,
+            valorUnitario: r.valorUnitario ? Number(r.valorUnitario.replace(',', '.')) : undefined,
+          })),
+      };
+
+      const res = await fetch('/api/cotacao/gerar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const numero = res.headers.get('X-Cotacao-Numero') ?? 'cotacao';
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cotacao-${numero}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Cotação ${numero} gerada com sucesso!`);
+      onClose();
+    } catch (e) {
+      toast.error(`Erro ao gerar cotação: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setGerando(false);
+    }
+  }
+
+  const inputCls = "w-full text-xs px-2 py-1.5 rounded border border-neutral-200 focus:outline-none focus:border-[#06B6D4] bg-white";
+
+  return (
+    <div className="space-y-5">
+      {/* Info fields */}
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <label className="block text-[11px] font-medium text-neutral-600 mb-1">Condições de Pagamento</label>
+          <input value={condicoesPgto} onChange={e => setCondicoesPgto(e.target.value)} className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-[11px] font-medium text-neutral-600 mb-1">Frete</label>
+          <input value={frete} onChange={e => setFrete(e.target.value)} className={inputCls} />
+        </div>
+        <div>
+          <label className="block text-[11px] font-medium text-neutral-600 mb-1">Validade da Proposta</label>
+          <input value={validade} onChange={e => setValidade(e.target.value)} className={inputCls} />
+        </div>
+      </div>
+
+      {/* Items table */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-semibold text-neutral-700">Itens da Cotação</p>
+          <button onClick={addRow} className="flex items-center gap-1 text-[11px] text-[#06B6D4] hover:text-[#0891B2] font-medium">
+            <Plus className="w-3.5 h-3.5" /> Adicionar linha
+          </button>
+        </div>
+
+        <div className="overflow-x-auto rounded border border-neutral-200">
+          <table className="w-full text-[11px]">
+            <thead>
+              <tr className="bg-neutral-50 border-b border-neutral-200">
+                {['#', 'Descrição *', 'Apresentação', 'Unid.', 'Quant.', 'Marca', 'Vl.Unit. (R$)', ''].map(h => (
+                  <th key={h} className="px-2 py-1.5 text-left font-semibold text-neutral-600 whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {itens.map((row, i) => (
+                <tr key={i} className="border-b border-neutral-100 last:border-0">
+                  <td className="px-2 py-1 text-neutral-400 w-6">{i + 1}</td>
+                  <td className="px-1 py-1 min-w-[160px]">
+                    <input value={row.descricao} onChange={e => updateRow(i, 'descricao', e.target.value)} className={inputCls} placeholder="Descrição do produto" />
+                  </td>
+                  <td className="px-1 py-1 min-w-[100px]">
+                    <input value={row.apresentacao} onChange={e => updateRow(i, 'apresentacao', e.target.value)} className={inputCls} placeholder="Ex: Cx c/ 100" />
+                  </td>
+                  <td className="px-1 py-1 w-14">
+                    <input value={row.unidade} onChange={e => updateRow(i, 'unidade', e.target.value)} className={inputCls} />
+                  </td>
+                  <td className="px-1 py-1 w-16">
+                    <input type="number" value={row.quantidade} onChange={e => updateRow(i, 'quantidade', e.target.value)} className={inputCls} min="0" />
+                  </td>
+                  <td className="px-1 py-1 min-w-[90px]">
+                    <input value={row.marca} onChange={e => updateRow(i, 'marca', e.target.value)} className={inputCls} placeholder="Marca" />
+                  </td>
+                  <td className="px-1 py-1 w-24">
+                    <input value={row.valorUnitario} onChange={e => updateRow(i, 'valorUnitario', e.target.value)} className={inputCls} placeholder="0,00" />
+                  </td>
+                  <td className="px-1 py-1 w-6">
+                    {itens.length > 1 && (
+                      <button onClick={() => removeRow(i)} className="text-neutral-300 hover:text-red-400 transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-[10px] text-neutral-400 mt-1">Linhas sem descrição são ignoradas.</p>
+      </div>
+
+      {/* Actions */}
+      <div className="flex justify-end gap-2 pt-2 border-t border-neutral-100">
+        <Button variant="outline" size="sm" onClick={onClose} disabled={gerando}>Cancelar</Button>
+        <Button size="sm" onClick={handleGerar} disabled={gerando} className="gap-2">
+          {gerando ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+          {gerando ? 'Gerando...' : 'Gerar e Baixar .docx'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Detail dialog ─────────────────────────────────────────────────────────────
 
 function ChecklistDialog({ id }: { id: string }) {
   const [detail, setDetail] = useState<ChecklistDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showCotacao, setShowCotacao] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -293,6 +463,48 @@ function ChecklistDialog({ id }: { id: string }) {
         </div>
       )}
 
+      {/* Fornecedores internos */}
+      {(detail.fornecedoresInternos ?? []).length > 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-md p-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Users className="w-4 h-4 text-green-600" />
+            <p className="text-xs font-bold text-green-700">
+              {detail.fornecedoresInternos!.length} fornecedor{detail.fornecedoresInternos!.length > 1 ? 'es' : ''} da sua carteira para este edital
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            {detail.fornecedoresInternos!.map(f => (
+              <div key={f.fornecedor_id} className="flex items-center gap-3 bg-white rounded px-3 py-2 border border-green-100">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-neutral-800">{f.nome_empresa}</p>
+                  <p className="text-[10px] text-neutral-500 truncate">Produto: {f.produto_match}</p>
+                </div>
+                {f.whatsapp && (
+                  <a
+                    href={`https://wa.me/${f.whatsapp.replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-[11px] text-green-600 hover:text-green-700 font-medium flex-shrink-0"
+                  >
+                    <MessageCircle className="w-3.5 h-3.5" />
+                    WhatsApp
+                  </a>
+                )}
+                {f.email && (
+                  <a
+                    href={`mailto:${f.email}`}
+                    className="text-[11px] text-blue-600 hover:text-blue-700 flex-shrink-0"
+                    title={f.email}
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Categories */}
       <div>
         {Object.entries(detail.categorias).map(([cat, itens]) => (
@@ -301,9 +513,39 @@ function ChecklistDialog({ id }: { id: string }) {
       </div>
 
       {/* Footer */}
-      <p className="text-[10px] text-neutral-400 text-center">
-        Criado em {formatDate(detail.criado_em)} · Auto-salvo
-      </p>
+      <div className="flex items-center justify-between pt-1">
+        <p className="text-[10px] text-neutral-400">
+          Criado em {formatDate(detail.criado_em)} · Auto-salvo
+        </p>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setShowCotacao(true)}
+          className="gap-1.5 text-xs"
+        >
+          <FileText className="w-3.5 h-3.5" />
+          Gerar Cotação
+        </Button>
+      </div>
+
+      {/* Cotação modal */}
+      {showCotacao && (
+        <Dialog open onOpenChange={open => !open && setShowCotacao(false)}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-[#06B6D4]" />
+                Gerar Cotação de Preços
+              </DialogTitle>
+            </DialogHeader>
+            <CotacaoModal
+              checklistId={id}
+              orgao={detail.orgao ?? ''}
+              onClose={() => setShowCotacao(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

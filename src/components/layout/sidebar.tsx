@@ -28,6 +28,7 @@ import {
   Star,
   Siren,
   ListChecks,
+  BookUser,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +55,7 @@ const navItems: NavItem[] = [
     children: [
       { href: "/fornecedores/radar", label: "Radar", icon: Radar },
       { href: "/fornecedores/vencedores", label: "Vencedores RJ", icon: Radio },
+      { href: "/fornecedores/cadastro", label: "Meus Fornecedores", icon: BookUser },
     ],
   },
   { href: "/cotacoes", label: "Cotações", icon: ClipboardList },
