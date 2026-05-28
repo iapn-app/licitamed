@@ -81,7 +81,28 @@ const MOCK_FALLBACK: FornecedorNorm[] = [
   },
 ];
 
-const ALL_CNAES = ["4645101", "4664800", "4644301", "4645102", "4684201"];
+const ALL_CNAES = [
+  // Comércio atacadista (categorias originais)
+  "4645101", // Materiais médicos e hospitalares
+  "4664800", // Equipamentos médico-hospitalares
+  "4644301", // Medicamentos e drogas
+  "4645102", // Descartáveis e correlatos
+  "4684201", // Saneantes e higiene hospitalar
+  // Fabricantes — materiais médicos e hospitalares
+  "3292002", // Fabricação de equipamentos de proteção individual
+  "3250705", // Fabricação de materiais para medicina e odontologia
+  "3250706", // Serviços de prótese dentária
+  // Fabricantes — descartáveis e correlatos
+  "2219600", // Fabricação de artefatos de borracha (luvas, preservativos)
+  "1742701", // Fabricação de fraldas descartáveis
+  // Fabricantes — equipamentos médico-hospitalares
+  "2660400", // Fabricação de aparelhos eletromédicos
+  "3250701", // Fabricação de instrumentos não eletrônicos para uso médico
+  // Fabricantes — medicamentos
+  "2121101", // Fabricação de medicamentos alopáticos para uso humano
+  "2121102", // Fabricação de medicamentos homeopáticos
+  "2121103", // Fabricação de medicamentos fitoterápicos
+];
 
 async function fetchByCnae(cnae: string, uf?: string): Promise<FornecedorNorm[]> {
   const apiUrl = new URL(
