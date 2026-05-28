@@ -120,7 +120,7 @@ export async function buscarLicitacoesPNCP(options: {
   paginas?: number;
   filtrarKeywords?: boolean;
 }): Promise<LicitacaoMonitor[]> {
-  const { diasPassados = 15, uf = 'RJ', filtrarKeywords = false } = options;
+  const { diasPassados = 3, uf = 'RJ', filtrarKeywords = false } = options;
   const now = new Date();
   const inicio = new Date(now); inicio.setDate(now.getDate() - diasPassados);
 

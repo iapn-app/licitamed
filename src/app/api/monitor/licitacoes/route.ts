@@ -17,10 +17,20 @@ export async function GET(req: NextRequest) {
   const dataInicial = searchParams.get('dataInicial') ?? '';
   const dataFinal = searchParams.get('dataFinal') ?? '';
 
-  console.log('Monitor licitacoes: iniciando busca', { uf, keyword, fonte });
+  // Calcular diasPassados a partir do filtro de data da UI (yyyy-mm-dd)
+  // Se não houver datas, usa padrão de 3 dias
+  let diasPassados = 3;
+  if (dataInicial) {
+    const inicio = new Date(dataInicial + 'T12:00:00');
+    const fim = dataFinal ? new Date(dataFinal + 'T12:00:00') : new Date();
+    const diff = Math.round((fim.getTime() - inicio.getTime()) / 86400000);
+    if (diff > 0) diasPassados = diff;
+  }
+
+  console.log('Monitor licitacoes: iniciando busca', { uf, keyword, fonte, diasPassados });
 
   const [pncpResult, licitacoesEResult] = await Promise.allSettled([
-    buscarLicitacoesPNCP({ uf, diasPassados: 15, filtrarKeywords: false }),
+    buscarLicitacoesPNCP({ uf, diasPassados, filtrarKeywords: false }),
     scrapeLicitacoesE(),
   ]);
 
