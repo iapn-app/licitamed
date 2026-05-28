@@ -182,10 +182,7 @@ export default function RadarPage() {
   const [cnpjError, setCnpjError] = useState(false);
 
   const handleSearch = async () => {
-    if (!uf) { toast.error("Selecione um estado"); return; }
-
     const categoria = CATEGORIAS.find((c) => c.id === categoriaId) ?? CATEGORIAS[0];
-
 
     setSearchState("loading");
     setResults([]);
@@ -193,7 +190,8 @@ export default function RadarPage() {
     setPage(0);
 
     try {
-      const params = new URLSearchParams({ cnae: categoria.cnae, uf });
+      const params = new URLSearchParams({ cnae: categoria.cnae });
+      if (uf) params.set("uf", uf);
       const res = await fetch(`/api/radar?${params}`);
 
       if (!res.ok) {
@@ -338,9 +336,10 @@ export default function RadarPage() {
             <label className="text-xs font-medium text-neutral-600 mb-1.5 block">Estado (UF)</label>
             <Select value={uf} onValueChange={setUf}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione um estado" />
+                <SelectValue placeholder="Todos os estados" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="">Todos os estados</SelectItem>
                 {UFS.map((sigla) => (
                   <SelectItem key={sigla} value={sigla}>
                     {sigla} — {UF_NAMES[sigla]}

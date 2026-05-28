@@ -83,7 +83,7 @@ const MOCK_FALLBACK: FornecedorNorm[] = [
 
 const ALL_CNAES = ["4645101", "4664800", "4644301", "4645102", "4684201"];
 
-async function fetchByCnae(cnae: string, uf: string): Promise<FornecedorNorm[]> {
+async function fetchByCnae(cnae: string, uf?: string): Promise<FornecedorNorm[]> {
   const apiUrl = new URL(
     "https://dadosabertos.compras.gov.br/modulo-fornecedor/1_consultarFornecedor"
   );
@@ -100,7 +100,8 @@ async function fetchByCnae(cnae: string, uf: string): Promise<FornecedorNorm[]> 
   if (!response.ok) return [];
 
   const raw = await response.json() as { resultado?: RawFornecedor[] };
-  return (raw?.resultado ?? []).map(normalize).filter((f) => f.ativo && f.uf === uf);
+  const items = (raw?.resultado ?? []).map(normalize).filter((f) => f.ativo);
+  return uf ? items.filter((f) => f.uf === uf) : items;
 }
 
 export const dynamic = 'force-dynamic';
@@ -108,14 +109,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const cnae = searchParams.get("cnae");
-  const uf = searchParams.get("uf");
-
-  if (!uf) {
-    return NextResponse.json(
-      { error: "Parâmetro obrigatório: uf" },
-      { status: 400 }
-    );
-  }
+  const uf = searchParams.get("uf") ?? undefined;
 
   try {
     // "Todas as categorias": fetch all unique CNAEs in parallel and deduplicate
@@ -161,8 +155,8 @@ export async function GET(request: NextRequest) {
     }
 
     const raw = await response.json() as { resultado?: RawFornecedor[] };
-    const all: FornecedorNorm[] = (raw?.resultado ?? []).map(normalize);
-    const filtered = all.filter((f) => f.ativo && f.uf === uf);
+    const all: FornecedorNorm[] = (raw?.resultado ?? []).map(normalize).filter((f) => f.ativo);
+    const filtered = uf ? all.filter((f) => f.uf === uf) : all;
 
     return NextResponse.json({ fornecedores: filtered });
   } catch (err) {
