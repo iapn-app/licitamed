@@ -263,12 +263,16 @@ export async function buscarLicitacoesPNCPComLog(options: {
   console.log(`PNCP: ${janelas.length} janela(s) | uf=${uf || 'Brasil todo'} | dias=${diasPassados}`);
   janelas.forEach((j, i) => console.log(`  janela ${i + 1}: ${j.dataInicial} → ${j.dataFinal}`));
 
-  // Busca todas as janelas × modalidades em paralelo
-  const tarefas = janelas.flatMap(j =>
-    MODALIDADES_PNCP.map(m => buscarModalidade(m, j.dataInicial, j.dataFinal, uf, porModalidade)),
-  );
-
-  const resultados = await Promise.allSettled(tarefas);
+  // Janelas sequenciais, modalidades em paralelo dentro de cada janela.
+  // Evita sobrecarregar o proxy Cloudflare com muitas conexões simultâneas.
+  const resultados: PromiseSettledResult<LicitacaoMonitor[]>[] = [];
+  for (const j of janelas) {
+    const tarefasJanela = MODALIDADES_PNCP.map(
+      m => buscarModalidade(m, j.dataInicial, j.dataFinal, uf, porModalidade),
+    );
+    const resJanela = await Promise.allSettled(tarefasJanela);
+    resultados.push(...resJanela);
+  }
 
   // Deduplica por id e contabiliza
   const seen = new Set<string>();
