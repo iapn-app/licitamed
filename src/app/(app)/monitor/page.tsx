@@ -6,7 +6,7 @@ import {
   Radio, Search, RefreshCw, ExternalLink, Clock,
   TrendingUp, FileText, DollarSign, CheckCircle2, XCircle,
   AlertCircle, ChevronUp, ChevronDown, X, ShieldCheck, Newspaper, Star,
-  ClipboardList,
+  ClipboardList, Database, // NOVO: Database para botão Sincronizar
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,9 @@ interface MonitorData {
   fontesAtivas: number;
   fontes: StatusFonte[];
   timestamp: string;
+  ultimaSincronizacao?: string | null; // NOVO
+  totalNoBanco?: number;               // NOVO
+  origem?: 'banco' | 'live';          // NOVO
 }
 
 type SortKey = 'dataPublicacao' | 'dataAbertura' | 'valorEstimado' | 'orgao' | 'fonte';
@@ -38,11 +41,45 @@ type SortDir = 'asc' | 'desc';
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const FONTE_COLORS: Record<string, string> = {
-  PNCP: 'bg-blue-50 text-blue-700 border-blue-200',
-  LicitacoesE: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  PNCP:       'bg-blue-50 text-blue-700 border-blue-200',
+  LicitacoesE:'bg-yellow-50 text-yellow-700 border-yellow-200',
+  ComprasGov: 'bg-green-50 text-green-700 border-green-200',
+  BLL:        'bg-purple-50 text-purple-700 border-purple-200',
+  Licitanet:  'bg-orange-50 text-orange-700 border-orange-200',
 };
 
 const MODALIDADES = ['Pregão Eletrônico', 'Pregão Presencial', 'Dispensa', 'Credenciamento', 'Concorrência', 'Tomada de Preços'];
+
+// NOVO: lista completa de estados brasileiros para o dropdown de UF
+const UFS_BR: Array<{ value: string; label: string }> = [
+  { value: 'AC', label: 'Acre' },
+  { value: 'AL', label: 'Alagoas' },
+  { value: 'AP', label: 'Amapá' },
+  { value: 'AM', label: 'Amazonas' },
+  { value: 'BA', label: 'Bahia' },
+  { value: 'CE', label: 'Ceará' },
+  { value: 'DF', label: 'Distrito Federal' },
+  { value: 'ES', label: 'Espírito Santo' },
+  { value: 'GO', label: 'Goiás' },
+  { value: 'MA', label: 'Maranhão' },
+  { value: 'MT', label: 'Mato Grosso' },
+  { value: 'MS', label: 'Mato Grosso do Sul' },
+  { value: 'MG', label: 'Minas Gerais' },
+  { value: 'PA', label: 'Pará' },
+  { value: 'PB', label: 'Paraíba' },
+  { value: 'PR', label: 'Paraná' },
+  { value: 'PE', label: 'Pernambuco' },
+  { value: 'PI', label: 'Piauí' },
+  { value: 'RJ', label: 'Rio de Janeiro' },
+  { value: 'RN', label: 'Rio Grande do Norte' },
+  { value: 'RS', label: 'Rio Grande do Sul' },
+  { value: 'RO', label: 'Rondônia' },
+  { value: 'RR', label: 'Roraima' },
+  { value: 'SC', label: 'Santa Catarina' },
+  { value: 'SP', label: 'São Paulo' },
+  { value: 'SE', label: 'Sergipe' },
+  { value: 'TO', label: 'Tocantins' },
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -55,6 +92,13 @@ function formatDate(iso: string | null | undefined) {
   if (!iso) return '—';
   const [y, m, d] = iso.slice(0, 10).split('-');
   return `${d}/${m}/${y}`;
+}
+
+// NOVO: formata data e hora de sincronização de forma compacta
+function formatSyncTime(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) +
+    ' às ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
 function isNova(iso: string) {
@@ -126,9 +170,11 @@ export default function MonitorPage() {
   const [data, setData] = useState<MonitorData | null>(null);
   const [loading, setLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [syncing, setSyncing] = useState(false); // NOVO
 
   // Filters
   const [keyword, setKeyword] = useState('');
+  const [uf, setUf] = useState('');             // NOVO
   const [fonte, setFonte] = useState('');
   const [modalidade, setModalidade] = useState('');
   const [dataInicial, setDataInicial] = useState('');
@@ -167,10 +213,11 @@ export default function MonitorPage() {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (keyword) params.set('keyword', keyword);
-      if (fonte) params.set('fonte', fonte);
-      if (dataInicial) params.set('dataInicial', dataInicial);
-      if (dataFinal) params.set('dataFinal', dataFinal);
+      if (keyword)     params.set('keyword',     keyword);
+      if (uf)          params.set('uf',           uf);       // NOVO
+      if (fonte)       params.set('fonte',        fonte);
+      if (dataInicial) params.set('dataInicial',  dataInicial);
+      if (dataFinal)   params.set('dataFinal',    dataFinal);
 
       const res = await fetch(`/api/monitor/licitacoes?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -182,7 +229,42 @@ export default function MonitorPage() {
     } finally {
       setLoading(false);
     }
-  }, [keyword, fonte, dataInicial, dataFinal]);
+  }, [keyword, uf, fonte, dataInicial, dataFinal]); // NOVO: uf adicionado às deps
+
+  // NOVO: sincroniza com o PNCP e salva no banco, depois recarrega os dados
+  const syncNow = useCallback(async () => {
+    setSyncing(true);
+    try {
+      const params = new URLSearchParams({ diasPassados: '7' });
+      if (uf) params.set('uf', uf);
+
+      const res = await fetch(`/api/monitor/sync?${params}`, { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const json = await res.json() as {
+        ok: boolean; status: string;
+        totalSalvo: number; duracaoMs: number; erro?: string;
+      };
+
+      if (json.ok) {
+        toast.success('Sincronização concluída', {
+          description: `${json.totalSalvo} licitações salvas em ${(json.duracaoMs / 1000).toFixed(1)}s`,
+        });
+        await fetchData();
+      } else {
+        toast.warning('Sincronização parcial', {
+          description: json.erro ?? `Status: ${json.status}`,
+        });
+        await fetchData();
+      }
+    } catch (e) {
+      toast.error('Erro na sincronização', {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    } finally {
+      setSyncing(false);
+    }
+  }, [uf, fetchData]);
 
   function handleSort(key: SortKey) {
     if (key === sortKey) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
@@ -190,11 +272,10 @@ export default function MonitorPage() {
   }
 
   function clearFilters() {
-    setKeyword(''); setFonte(''); setModalidade(''); setDataInicial(''); setDataFinal('');
+    setKeyword(''); setUf(''); setFonte(''); setModalidade(''); setDataInicial(''); setDataFinal(''); // NOVO: setUf('')
   }
 
   // Apply client-side filters (modalidade + keyword) + sort
-  // Keyword filtra imediatamente nos dados já carregados enquanto o usuário digita
   const filtered = (data?.dados ?? [])
     .filter(d => {
       if (modalidade && d.modalidade !== modalidade) return false;
@@ -222,7 +303,7 @@ export default function MonitorPage() {
       return sortDir === 'asc' ? cmp : -cmp;
     });
 
-  const hasFilters = keyword || fonte || modalidade || dataInicial || dataFinal;
+  const hasFilters = keyword || uf || fonte || modalidade || dataInicial || dataFinal; // NOVO: || uf
 
   return (
     <div className="space-y-6">
@@ -231,23 +312,55 @@ export default function MonitorPage() {
         <div>
           <div className="flex items-center gap-2.5 mb-1">
             <Radio className="w-5 h-5 text-[#06B6D4]" />
-            <h1 className="text-xl font-semibold text-neutral-900">Monitor de Licitações — RJ</h1>
+            {/* NOVO: título dinâmico conforme UF selecionada */}
+            <h1 className="text-xl font-semibold text-neutral-900">
+              Monitor de Licitações{uf ? ` — ${uf}` : ''}
+            </h1>
           </div>
-          <p className="text-sm text-neutral-500">
-            PNCP — Portal Nacional de Contratações Públicas
-          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm text-neutral-500">
+              PNCP — Portal Nacional de Contratações Públicas
+            </p>
+            {/* NOVO: exibe data da última sincronização com o banco */}
+            {data?.ultimaSincronizacao && (
+              <span className="text-xs text-neutral-400">
+                · sincronizado {formatSyncTime(data.ultimaSincronizacao)}
+              </span>
+            )}
+            {data?.origem === 'live' && (
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200">
+                ao vivo
+              </span>
+            )}
+          </div>
         </div>
-        <Button
-          onClick={fetchData}
-          disabled={loading}
-          className="gap-2"
-        >
-          {loading ? (
-            <><RefreshCw className="w-4 h-4 animate-spin" />Buscando...</>
-          ) : (
-            <><Search className="w-4 h-4" />{loaded ? 'Atualizar' : 'Buscar licitações'}</>
-          )}
-        </Button>
+
+        {/* NOVO: botões Sincronizar + Buscar lado a lado */}
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            onClick={syncNow}
+            disabled={syncing || loading}
+            className="gap-2"
+          >
+            {syncing ? (
+              <><RefreshCw className="w-4 h-4 animate-spin" />Sincronizando...</>
+            ) : (
+              <><Database className="w-4 h-4" />Sincronizar</>
+            )}
+          </Button>
+          <Button
+            onClick={fetchData}
+            disabled={loading || syncing}
+            className="gap-2"
+          >
+            {loading ? (
+              <><RefreshCw className="w-4 h-4 animate-spin" />Buscando...</>
+            ) : (
+              <><Search className="w-4 h-4" />{loaded ? 'Atualizar' : 'Buscar licitações'}</>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Stats cards */}
@@ -312,7 +425,8 @@ export default function MonitorPage() {
             </button>
           )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3">
+        {/* NOVO: grid expandido para 6 colunas no xl para acomodar UF */}
+        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
             <Input
@@ -323,6 +437,20 @@ export default function MonitorPage() {
               className="pl-8 text-sm"
             />
           </div>
+
+          {/* NOVO: dropdown de UF */}
+          <Select value={uf || 'all'} onValueChange={v => setUf(v === 'all' ? '' : v)}>
+            <SelectTrigger><SelectValue placeholder="Estado" /></SelectTrigger>
+            <SelectContent className="max-h-72 overflow-y-auto">
+              <SelectItem value="all">Brasil todo</SelectItem>
+              {UFS_BR.map(u => (
+                <SelectItem key={u.value} value={u.value}>
+                  {u.value} — {u.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Select value={fonte || 'all'} onValueChange={v => setFonte(v === 'all' ? '' : v)}>
             <SelectTrigger><SelectValue placeholder="Fonte" /></SelectTrigger>
             <SelectContent>
@@ -331,6 +459,7 @@ export default function MonitorPage() {
               <SelectItem value="LicitacoesE">Licitações-e (BB)</SelectItem>
             </SelectContent>
           </Select>
+
           <Select value={modalidade || 'all'} onValueChange={v => setModalidade(v === 'all' ? '' : v)}>
             <SelectTrigger><SelectValue placeholder="Modalidade" /></SelectTrigger>
             <SelectContent>
@@ -338,8 +467,9 @@ export default function MonitorPage() {
               {MODALIDADES.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
             </SelectContent>
           </Select>
+
           <Input type="date" value={dataInicial} onChange={e => setDataInicial(e.target.value)} className="text-sm" />
-          <Input type="date" value={dataFinal} onChange={e => setDataFinal(e.target.value)} className="text-sm" />
+          <Input type="date" value={dataFinal}   onChange={e => setDataFinal(e.target.value)}   className="text-sm" />
         </div>
       </div>
 
@@ -349,11 +479,19 @@ export default function MonitorPage() {
           <p className="text-sm font-semibold text-neutral-900">
             {loaded ? `${filtered.length} licitação${filtered.length !== 1 ? 'ões' : ''}` : 'Licitações'}
           </p>
-          {data?.timestamp && (
-            <p className="text-xs text-neutral-400">
-              Atualizado às {new Date(data.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-            </p>
-          )}
+          {/* NOVO: mostra origem (banco/live) + timestamps */}
+          <div className="flex flex-col items-end gap-0.5">
+            {data?.ultimaSincronizacao && (
+              <p className="text-xs text-neutral-400">
+                Banco: {formatSyncTime(data.ultimaSincronizacao)}
+              </p>
+            )}
+            {data?.timestamp && (
+              <p className="text-xs text-neutral-400">
+                Carregado: {new Date(data.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            )}
+          </div>
         </div>
 
         {!loaded && !loading && (
@@ -363,7 +501,7 @@ export default function MonitorPage() {
             </div>
             <p className="text-sm font-semibold text-neutral-800 mb-1">Monitor aguardando</p>
             <p className="text-xs text-neutral-400 max-w-xs">
-              Clique em &quot;Buscar licitações&quot; para carregar editais hospitalares de todas as fontes do RJ
+              Clique em &quot;Buscar licitações&quot; para carregar editais hospitalares ou &quot;Sincronizar&quot; para salvar no banco
             </p>
           </div>
         )}
@@ -466,7 +604,7 @@ export default function MonitorPage() {
         )}
       </div>
 
-      {/* Detail modal */}
+      {/* Detail modal — inalterado */}
       <Dialog open={!!selected} onOpenChange={open => { if (!open) { setSelected(null); setChecklistId(null); } }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
@@ -476,7 +614,7 @@ export default function MonitorPage() {
           {selected && (
             <div className="space-y-4 text-sm">
               <div className="flex flex-wrap gap-2">
-                <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full border', FONTE_COLORS[selected.fonte])}>
+                <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full border', FONTE_COLORS[selected.fonte] ?? 'bg-neutral-100 text-neutral-600 border-neutral-200')}>
                   {selected.fonte}
                 </span>
                 {selected.palavrasEncontradas?.map(p => (
@@ -492,14 +630,14 @@ export default function MonitorPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { label: 'Órgão', value: selected.orgao },
-                  { label: 'Modalidade', value: selected.modalidade },
-                  { label: 'Número', value: selected.numeroEdital ?? '—' },
-                  { label: 'Município', value: [selected.municipio, selected.uf].filter(Boolean).join(', ') || '—' },
+                  { label: 'Órgão',          value: selected.orgao },
+                  { label: 'Modalidade',     value: selected.modalidade },
+                  { label: 'Número',         value: selected.numeroEdital ?? '—' },
+                  { label: 'Município',      value: [selected.municipio, selected.uf].filter(Boolean).join(', ') || '—' },
                   { label: 'Valor estimado', value: formatBRL(selected.valorEstimado) },
-                  { label: 'Publicação', value: formatDate(selected.dataPublicacao) },
-                  { label: 'Abertura', value: formatDate(selected.dataAbertura) },
-                  { label: 'Status', value: selected.status },
+                  { label: 'Publicação',     value: formatDate(selected.dataPublicacao) },
+                  { label: 'Abertura',       value: formatDate(selected.dataAbertura) },
+                  { label: 'Status',         value: selected.status },
                 ].map(({ label, value }) => (
                   <div key={label}>
                     <p className="text-[10px] font-semibold text-neutral-400 uppercase tracking-wide">{label}</p>
@@ -518,9 +656,9 @@ export default function MonitorPage() {
                     {!scoreLoading && orgaoScore && (() => {
                       const colors: Record<string, string> = {
                         excelente: 'bg-green-50 text-green-700 border-green-200',
-                        bom: 'bg-blue-50 text-blue-700 border-blue-200',
-                        regular: 'bg-orange-50 text-orange-700 border-orange-200',
-                        risco: 'bg-red-50 text-red-700 border-red-200',
+                        bom:       'bg-blue-50 text-blue-700 border-blue-200',
+                        regular:   'bg-orange-50 text-orange-700 border-orange-200',
+                        risco:     'bg-red-50 text-red-700 border-red-200',
                       };
                       const emojis: Record<string, string> = { excelente: '🟢', bom: '🔵', regular: '🟠', risco: '🔴' };
                       return (
@@ -578,8 +716,8 @@ export default function MonitorPage() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                           licitacaoId: selected.id,
-                          objeto: selected.objeto,
-                          orgao: selected.orgao,
+                          objeto:      selected.objeto,
+                          orgao:       selected.orgao,
                         }),
                       });
                       const data = await res.json() as { checklistId?: string; usouIA?: boolean; erro?: string };

@@ -1,4 +1,12 @@
-export type FonteMonitor = 'PNCP' | 'LicitacoesE';
+export type FonteMonitor =
+  | 'PNCP'
+  | 'LicitacoesE'
+  | 'ComprasGov'
+  | 'BLL'
+  | 'Licitanet'
+  | 'PortalCompras'
+  | 'ComprasBR'
+  | 'DOU';
 
 export interface LicitacaoMonitor {
   id: string;
@@ -59,4 +67,54 @@ export interface LicitacoesResponse {
   total: number;
   fontes: StatusFonte[];
   timestamp: string;
+  ultimaSincronizacao?: string | null;
+  totalNoBanco?: number;
+}
+
+// Item individual de um edital (produto, quantidade, valor unitário)
+export interface LicitacaoItem {
+  licitacaoId: string;
+  numeroItem: number;
+  descricao: string;
+  unidade?: string | null;
+  quantidade?: number | null;
+  valorUnitarioEstimado?: number | null;
+  valorTotal?: number | null;
+}
+
+// Log de execução de uma sincronização
+export interface MonitorLog {
+  id?: string;
+  fonte: FonteMonitor | 'todas';
+  totalBuscado: number;
+  totalSalvo: number;
+  totalDescartado: number;
+  motivosDescarte?: Record<string, number>; // ex: { sem_keyword: 120, duplicata: 5 }
+  duracaoMs: number;
+  status: 'sucesso' | 'erro' | 'parcial';
+  erro?: string | null;
+  criadoEm?: string;
+}
+
+// Palavra-chave gerenciável com peso e categoria
+export interface PalavraChaveMonitor {
+  palavra: string;
+  peso: number; // 1 (genérico) a 10 (altamente específico)
+  categoria: 'equipamentos' | 'descartaveis' | 'insumos' | 'correlatos' | 'cirurgico' | 'diagnostico' | 'generico_saude';
+  ativa: boolean;
+  variacoes?: string[]; // formas alternativas / sem acento / plural
+}
+
+// Pontuação de relevância de uma licitação para o perfil da empresa
+export interface OportunidadeScore {
+  licitacaoId: string;
+  score: number; // 0 a 100
+  classificacao: 'alta' | 'media' | 'baixa';
+  fatores: {
+    keywordsEncontradas: string[];
+    pesoTotal: number;
+    temValor: boolean;
+    isPregao: boolean;
+    dentroPrazo: boolean;
+  };
 }

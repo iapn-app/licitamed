@@ -2,6 +2,8 @@ import { temPalavraChave, encontrarPalavras } from './keywords';
 import type { LicitacaoMonitor, VencedorMonitor, ContratoMonitor } from './types';
 import { classificarSegmento } from './segmentos';
 
+// ─── Interfaces internas da API PNCP ─────────────────────────────────────────
+
 interface PNCPItem {
   numeroControlePNCP?: string;
   numeroCompra?: number | string;
@@ -30,6 +32,19 @@ interface PNCPContrato {
   linkSistemaOrigem?: string;
 }
 
+// ─── Log de execução exportado ────────────────────────────────────────────────
+
+export interface PNCPBuscaLog {
+  totalBuscado: number;       // itens retornados pela API antes de qualquer filtro
+  totalDuplicatas: number;    // removidos por serem duplicatas (mesmo id)
+  totalDescartado: number;    // removidos por não bater keyword (quando filtrarKeywords=true)
+  totalAproveitado: number;   // itens no resultado final
+  porModalidade: Record<number, number>; // código da modalidade → qtd de itens brutos
+  duracaoMs: number;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function toDateStr(d: Date): string {
   return new Intl.DateTimeFormat('sv-SE', { timeZone: 'America/Sao_Paulo' })
     .format(d)
@@ -41,9 +56,8 @@ function toDateStr(d: Date): string {
 // 9=Inexigibilidade, 12=Manifestação de Interesse
 const MODALIDADES_PNCP = [1, 2, 3, 4, 5, 6, 7, 8, 9, 12];
 
-function mapPNCPItem(item: PNCPItem, uf: string): LicitacaoMonitor {
+function mapPNCPItem(item: PNCPItem, ufFallback: string): LicitacaoMonitor {
   const objeto = item.objetoCompra ?? '';
-  // Monta número legível: "90029/2026" para facilitar busca textual
   const numeroEdital = (item.numeroCompra && item.anoCompra)
     ? `${item.numeroCompra}/${item.anoCompra}`
     : null;
@@ -61,38 +75,99 @@ function mapPNCPItem(item: PNCPItem, uf: string): LicitacaoMonitor {
     urlEdital: item.linkSistemaOrigem ?? null,
     numeroEdital,
     municipio: item.unidadeOrgao?.municipioNome ?? null,
-    uf: item.unidadeOrgao?.ufSigla ?? uf,
+    uf: item.unidadeOrgao?.ufSigla ?? ufFallback,
     palavrasEncontradas: encontrarPalavras(objeto),
   };
 }
 
-const PNCP_BASE_URL = process.env.PNCP_PROXY_URL?.trim() || 'https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao';
+const PNCP_BASE_URL =
+  process.env.PNCP_PROXY_URL?.trim() ||
+  'https://pncp.gov.br/api/consulta/v1/contratacoes/publicacao';
 console.log('PNCP_BASE_URL:', PNCP_BASE_URL);
 
-async function buscarModalidade(modalidade: number, dataInicial: string, dataFinal: string, uf: string): Promise<LicitacaoMonitor[]> {
-  const timeout = process.env.PNCP_PROXY_URL ? 25000 : 8000;
+// ─── Fetch com retry ──────────────────────────────────────────────────────────
+// Retenta em: timeout, erro de rede, 429 (rate limit), 5xx (servidor)
+// Não retenta em: 4xx (exceto 429), pois indicam requisição inválida
+
+async function fetchComRetry(
+  url: string,
+  opts: RequestInit,
+  maxTentativas = 3,
+): Promise<Response> {
+  let ultimoErro: unknown;
+
+  for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
+    try {
+      const res = await fetch(url, opts);
+
+      if ((res.status === 429 || res.status >= 500) && tentativa < maxTentativas) {
+        const delay = 500 * tentativa; // 500ms, 1000ms
+        console.log(`PNCP: HTTP ${res.status} — retry ${tentativa}/${maxTentativas} em ${delay}ms`);
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+
+      return res;
+    } catch (err) {
+      ultimoErro = err;
+      const isRetryable =
+        err instanceof Error &&
+        (err.name === 'AbortError' ||
+          err.name === 'TimeoutError' ||
+          err.message.includes('fetch failed') ||
+          err.message.includes('ECONNRESET'));
+
+      if (!isRetryable || tentativa >= maxTentativas) throw err;
+
+      const delay = 500 * tentativa;
+      console.log(
+        `PNCP: erro de rede (${err instanceof Error ? err.name : String(err)}) — retry ${tentativa}/${maxTentativas} em ${delay}ms`,
+      );
+      await new Promise(r => setTimeout(r, delay));
+    }
+  }
+
+  throw ultimoErro;
+}
+
+// ─── Busca por modalidade ─────────────────────────────────────────────────────
+
+async function buscarModalidade(
+  modalidade: number,
+  dataInicial: string,
+  dataFinal: string,
+  uf: string, // '' = Brasil todo
+  porModalidade: Record<number, number>,
+): Promise<LicitacaoMonitor[]> {
+  // Proxy tem mais latência → timeout maior, mas reduzido para caber em retries
+  const timeout = process.env.PNCP_PROXY_URL ? 15000 : 8000;
   const TAMANHO = 50;
-  const MAX_PAGINAS = 10;
+  const MAX_PAGINAS = 20; // era 10
 
   const buildUrl = (pagina: number) => {
     const params = new URLSearchParams({
-      dataInicial, dataFinal,
+      dataInicial,
+      dataFinal,
       pagina: String(pagina),
       tamanhoPagina: String(TAMANHO),
       codigoModalidadeContratacao: String(modalidade),
     });
-    if (uf) params.set('uf', uf);
+    if (uf) params.set('uf', uf); // omitir parâmetro = Brasil todo
     const urlObj = new URL(PNCP_BASE_URL);
     params.forEach((value, key) => urlObj.searchParams.set(key, value));
     return urlObj.toString();
   };
 
-  console.log(`PNCP: modalidade=${modalidade}...`);
-
-  const res1 = await fetch(buildUrl(1), {
-    headers: { Accept: 'application/json' },
-    signal: AbortSignal.timeout(timeout),
-  });
+  let res1: Response;
+  try {
+    res1 = await fetchComRetry(
+      buildUrl(1),
+      { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(timeout) },
+    );
+  } catch (err) {
+    console.log(`PNCP: modalidade=${modalidade} — falhou após retries: ${String(err)}`);
+    return [];
+  }
 
   if (!res1.ok) {
     console.log(`PNCP: HTTP ${res1.status} modalidade=${modalidade}`);
@@ -103,38 +178,49 @@ async function buscarModalidade(modalidade: number, dataInicial: string, dataFin
   if (!json1.data?.length) return [];
 
   const totalPaginas = Math.min(json1.totalPaginas ?? 1, MAX_PAGINAS);
-  let todos: PNCPItem[] = [...(json1.data ?? [])];
+  let todos: PNCPItem[] = Array.from(json1.data ?? []);
 
   if (totalPaginas > 1) {
     const restantes = await Promise.allSettled(
       Array.from({ length: totalPaginas - 1 }, (_, i) =>
-        fetch(buildUrl(i + 2), { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(timeout) })
+        fetch(buildUrl(i + 2), {
+          headers: { Accept: 'application/json' },
+          signal: AbortSignal.timeout(timeout),
+        })
           .then(r => r.ok ? r.json() as Promise<{ data?: PNCPItem[] }> : Promise.resolve({ data: [] as PNCPItem[] }))
           .then(d => d.data ?? [])
-          .catch(() => [] as PNCPItem[])
-      )
+          .catch(() => [] as PNCPItem[]),
+      ),
     );
-    restantes.forEach(r => { if (r.status === 'fulfilled') todos = [...todos, ...r.value]; });
+    restantes.forEach(r => {
+      if (r.status === 'fulfilled') todos = todos.concat(r.value);
+    });
   }
 
-  console.log(`PNCP: modalidade=${modalidade} → ${todos.length} itens (${totalPaginas} págs)`);
+  const itensNestaPagina = todos.length;
+  porModalidade[modalidade] = (porModalidade[modalidade] ?? 0) + itensNestaPagina;
+
+  console.log(`PNCP: modalidade=${modalidade} → ${itensNestaPagina} itens (${totalPaginas} págs)`);
   return todos.map(item => mapPNCPItem(item, uf));
 }
 
-// Gera janelas de [tamanho] dias cobrindo os últimos [total] dias
-// Cada janela busca páginas 1-10, evitando page numbers altos que travam o proxy
-function gerarJanelas(totalDias: number, tamanhoDias: number): Array<{ dataInicial: string; dataFinal: string }> {
+// ─── Gerador de janelas temporais ─────────────────────────────────────────────
+// Divide o período em janelas de N dias para evitar page numbers altos no proxy
+
+function gerarJanelas(
+  totalDias: number,
+  tamanhoDias: number,
+): Array<{ dataInicial: string; dataFinal: string }> {
   const janelas: Array<{ dataInicial: string; dataFinal: string }> = [];
   const now = new Date();
   let cursor = new Date(now);
+  const limite = new Date(now.getTime() - totalDias * 86400000);
 
-  while (cursor > new Date(now.getTime() - totalDias * 86400000)) {
+  while (cursor > limite) {
     const fim = new Date(cursor);
     const ini = new Date(cursor);
     ini.setDate(ini.getDate() - tamanhoDias);
-    if (ini < new Date(now.getTime() - totalDias * 86400000)) {
-      ini.setTime(new Date(now.getTime() - totalDias * 86400000).getTime());
-    }
+    if (ini < limite) ini.setTime(limite.getTime());
     janelas.push({ dataInicial: toDateStr(ini), dataFinal: toDateStr(fim) });
     cursor.setDate(cursor.getDate() - tamanhoDias);
   }
@@ -142,38 +228,54 @@ function gerarJanelas(totalDias: number, tamanhoDias: number): Array<{ dataInici
   return janelas;
 }
 
-export async function buscarLicitacoesPNCP(options: {
-  diasPassados?: number;
-  uf?: string;
-  paginas?: number;
-  filtrarKeywords?: boolean;
-  janelasDias?: number; // divide o período em janelas menores para cobrir datas recentes
-}): Promise<LicitacaoMonitor[]> {
-  const { diasPassados = 3, uf = 'RJ', filtrarKeywords = false, janelasDias } = options;
+// ─── buscarLicitacoesPNCPComLog ───────────────────────────────────────────────
+// Versão principal que retorna dados + log detalhado (usada pelo sync)
 
-  // Quando janelasDias está definido, divide o período em janelas de N dias
-  // Cada janela busca páginas 1-10 → cobre no máximo 500 itens por janela
-  // Evita page numbers altos que o proxy Cloudflare não consegue processar
+export async function buscarLicitacoesPNCPComLog(options: {
+  diasPassados?: number;
+  uf?: string;               // '' ou undefined = Brasil todo
+  filtrarKeywords?: boolean;
+  janelasDias?: number;
+  dataAberturaApos?: string; // filtro client-side: yyyy-mm-dd — só itens com abertura após esta data
+  dataAberturaAte?: string;  // filtro client-side: yyyy-mm-dd
+}): Promise<{ dados: LicitacaoMonitor[]; log: PNCPBuscaLog }> {
+  const {
+    diasPassados = 30,
+    uf = '',
+    filtrarKeywords = false,
+    janelasDias,
+    dataAberturaApos,
+    dataAberturaAte,
+  } = options;
+
+  const inicio = Date.now();
+  const porModalidade: Record<number, number> = {};
+
   const janelas = janelasDias
     ? gerarJanelas(diasPassados, janelasDias)
     : (() => {
         const now = new Date();
-        const inicio = new Date(now); inicio.setDate(now.getDate() - diasPassados);
-        return [{ dataInicial: toDateStr(inicio), dataFinal: toDateStr(now) }];
+        const ini = new Date(now);
+        ini.setDate(now.getDate() - diasPassados);
+        return [{ dataInicial: toDateStr(ini), dataFinal: toDateStr(now) }];
       })();
 
-  console.log(`PNCP: ${janelas.length} janela(s) de busca`);
+  console.log(`PNCP: ${janelas.length} janela(s) | uf=${uf || 'Brasil todo'} | dias=${diasPassados}`);
   janelas.forEach((j, i) => console.log(`  janela ${i + 1}: ${j.dataInicial} → ${j.dataFinal}`));
-
-  const seen = new Set<string>();
-  const resultado: LicitacaoMonitor[] = [];
 
   // Busca todas as janelas × modalidades em paralelo
   const tarefas = janelas.flatMap(j =>
-    MODALIDADES_PNCP.map(m => buscarModalidade(m, j.dataInicial, j.dataFinal, uf))
+    MODALIDADES_PNCP.map(m => buscarModalidade(m, j.dataInicial, j.dataFinal, uf, porModalidade)),
   );
 
   const resultados = await Promise.allSettled(tarefas);
+
+  // Deduplica por id e contabiliza
+  const seen = new Set<string>();
+  let totalBuscado = 0;
+  let totalDuplicatas = 0;
+  let totalDescartado = 0;
+  const resultado: LicitacaoMonitor[] = [];
 
   for (const r of resultados) {
     if (r.status !== 'fulfilled') {
@@ -181,17 +283,67 @@ export async function buscarLicitacoesPNCP(options: {
       continue;
     }
     for (const item of r.value) {
-      if (seen.has(item.id)) continue;
+      totalBuscado++;
+
+      if (seen.has(item.id)) {
+        totalDuplicatas++;
+        continue;
+      }
       seen.add(item.id);
-      if (filtrarKeywords && !temPalavraChave(item.objeto)) continue;
+
+      if (filtrarKeywords && !temPalavraChave(item.objeto)) {
+        totalDescartado++;
+        continue;
+      }
+
+      // Filtro client-side por data de abertura de proposta
+      if (dataAberturaApos && item.dataAbertura && item.dataAbertura < dataAberturaApos) continue;
+      if (dataAberturaAte && item.dataAbertura && item.dataAbertura > dataAberturaAte) continue;
+
       resultado.push(item);
     }
   }
 
   resultado.sort((a, b) => b.dataPublicacao.localeCompare(a.dataPublicacao));
-  console.log(`PNCP: total encontrado = ${resultado.length}`);
-  return resultado;
+
+  const log: PNCPBuscaLog = {
+    totalBuscado,
+    totalDuplicatas,
+    totalDescartado,
+    totalAproveitado: resultado.length,
+    porModalidade,
+    duracaoMs: Date.now() - inicio,
+  };
+
+  console.log(
+    `PNCP: buscado=${log.totalBuscado} | dupl=${log.totalDuplicatas} | descartado=${log.totalDescartado} | aproveitado=${log.totalAproveitado} | ${log.duracaoMs}ms`,
+  );
+
+  return { dados: resultado, log };
 }
+
+// ─── buscarLicitacoesPNCP ─────────────────────────────────────────────────────
+// Mantém a assinatura original para compatibilidade com callers existentes.
+// Internamente delega para buscarLicitacoesPNCPComLog.
+
+export async function buscarLicitacoesPNCP(options: {
+  diasPassados?: number;
+  uf?: string;
+  paginas?: number;         // parâmetro legado — ignorado internamente
+  filtrarKeywords?: boolean;
+  janelasDias?: number;
+}): Promise<LicitacaoMonitor[]> {
+  const { dados } = await buscarLicitacoesPNCPComLog({
+    diasPassados: options.diasPassados,
+    uf: options.uf,
+    filtrarKeywords: options.filtrarKeywords,
+    janelasDias: options.janelasDias,
+  });
+  return dados;
+}
+
+// ─── buscarContratosPNCP ──────────────────────────────────────────────────────
+// Inalterado — usado pelo módulo de vencedores (fora do escopo desta etapa)
 
 export async function buscarContratosPNCP(options: {
   diasPassados?: number;
@@ -200,7 +352,8 @@ export async function buscarContratosPNCP(options: {
 }): Promise<{ vencedores: VencedorMonitor[]; contratos: ContratoMonitor[]; contratosPorCnpj: Record<string, ContratoMonitor[]> }> {
   const { diasPassados = 90, uf = 'RJ', paginas = 10 } = options;
   const now = new Date();
-  const inicio = new Date(now); inicio.setDate(now.getDate() - diasPassados);
+  const inicio = new Date(now);
+  inicio.setDate(now.getDate() - diasPassados);
 
   const dataInicial = toDateStr(inicio);
   const dataFinal = toDateStr(now);
@@ -221,7 +374,7 @@ export async function buscarContratosPNCP(options: {
 
       const res = await fetch(
         `https://pncp.gov.br/api/consulta/v1/contratos/publicacao?${params}`,
-        { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(15000) }
+        { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(15000) },
       );
       if (!res.ok) break;
 
@@ -241,7 +394,10 @@ export async function buscarContratosPNCP(options: {
         if (existing) {
           existing.info.totalContratosRj += 1;
           existing.info.valorTotalContratosRj += valor;
-          if (contrato.dataAssinatura && (!existing.info.ultimoContrato || contrato.dataAssinatura > existing.info.ultimoContrato)) {
+          if (
+            contrato.dataAssinatura &&
+            (!existing.info.ultimoContrato || contrato.dataAssinatura > existing.info.ultimoContrato)
+          ) {
             existing.info.ultimoContrato = contrato.dataAssinatura?.slice(0, 10);
           }
         } else {
@@ -283,7 +439,7 @@ export async function buscarContratosPNCP(options: {
 
   const contratos = Array.from(contratosMap.values()).flatMap(e => e.contratos);
   const contratosPorCnpj = Object.fromEntries(
-    Array.from(contratosMap.entries()).map(([cnpj, e]) => [cnpj, e.contratos])
+    Array.from(contratosMap.entries()).map(([cnpj, e]) => [cnpj, e.contratos]),
   );
 
   return { vencedores, contratos, contratosPorCnpj };
