@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabase, adminSupabase } from '@/lib/supabase';
 import { buscarLicitacoesPNCP } from '@/lib/monitor/pncp';
 import { scrapeLicitacoesE } from '@/lib/monitor/scrapers';
 import { temPalavraChave } from '@/lib/monitor/keywords';
@@ -110,11 +110,15 @@ interface BancResult {
 
 async function buscarNoBanco(p: QueryParams): Promise<BancResult | null> {
   try {
+    // Usa o service role client para bypassa RLS e grants da role anon
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const db: any = adminSupabase() ?? supabase;
+
     // Busca última sincronização bem-sucedida em paralelo com os dados
     const [dataQuery, syncQuery] = await Promise.all([
       (() => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let q = (supabase as any)
+        let q = (db as any)
           .from('licitacoes_monitor')
           .select('*', { count: 'exact' })
           .order('data_publicacao', { ascending: false })
@@ -135,9 +139,8 @@ async function buscarNoBanco(p: QueryParams): Promise<BancResult | null> {
         return q;
       })(),
 
-      supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from('monitor_logs' as any)
+      db
+        .from('monitor_logs')
         .select('created_at')
         .in('status', ['sucesso', 'parcial'])
         .order('created_at', { ascending: false })
