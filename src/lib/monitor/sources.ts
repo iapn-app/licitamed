@@ -42,12 +42,16 @@ export class PNCPSource implements MonitorSource {
     const inicio = Date.now();
     const motivos: Record<string, number> = {};
 
+    // Janelas de 10 dias evitam timeouts do proxy Cloudflare em buscas longas
+    const janelasDias = diasPassados > 10 ? 10 : undefined;
+
     let brutos: LicitacaoMonitor[] = [];
     try {
       brutos = await buscarLicitacoesPNCP({
         uf: uf || undefined,
         diasPassados,
         filtrarKeywords: false, // filtramos aqui para poder logar os descartes
+        janelasDias,
       });
     } catch (err) {
       motivos.erro_busca = 1;
