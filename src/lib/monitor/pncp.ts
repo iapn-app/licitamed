@@ -213,7 +213,7 @@ function gerarJanelas(
 ): Array<{ dataInicial: string; dataFinal: string }> {
   const janelas: Array<{ dataInicial: string; dataFinal: string }> = [];
   const now = new Date();
-  let cursor = new Date(now);
+  const cursor = new Date(now);
   const limite = new Date(now.getTime() - totalDias * 86400000);
 
   while (cursor > limite) {
